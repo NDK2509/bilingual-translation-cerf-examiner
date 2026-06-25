@@ -7,6 +7,8 @@ import 'package:practice_translating_english/services/ai_service.dart';
 import 'package:practice_translating_english/providers/settings_provider.dart';
 import 'package:practice_translating_english/providers/translation_provider.dart';
 
+import 'package:practice_translating_english/providers/vocabulary_provider.dart';
+
 void main() {
   testWidgets('App compiles and runs smoke test', (WidgetTester tester) async {
     // Set up mock shared preferences
@@ -22,6 +24,9 @@ void main() {
           ),
           ChangeNotifierProvider<TranslationProvider>(
             create: (_) => TranslationProvider(storageService, aiService),
+          ),
+          ChangeNotifierProvider<VocabularyProvider>(
+            create: (_) => VocabularyProvider(storageService, aiService),
           ),
         ],
         child: const TranslationPracticeApp(),

@@ -251,4 +251,108 @@ Use this action when evaluating a submitted user translation.
       throw Exception('Failed to evaluate translation via Gemini: $e');
     }
   }
+
+  // Action C: Define Word
+  Future<Map<String, dynamic>> defineWord({
+    required String word,
+    required String contextSentence,
+    required bool useMock,
+    required String apiKey,
+    String modelName = 'gemini-3.5-flash',
+  }) async {
+    if (useMock || apiKey.isEmpty) {
+      // Delay to simulate network call
+      await Future.delayed(const Duration(milliseconds: 1000));
+      
+      final lowerWord = word.toLowerCase().replaceAll(RegExp(r'[^a-z\s]'), '');
+      
+      String phonetic = '/.../';
+      String definition = 'Định nghĩa giả lập cho từ "$word".';
+      String contextExplanation = 'Cách dùng đặc biệt trong ngữ cảnh câu này.';
+      
+      if (lowerWord.contains('pull') || lowerWord.contains('through')) {
+        phonetic = '/pʊl θruː/';
+        definition = 'vượt qua (một giai đoạn khó khăn, bệnh tật)';
+        contextExplanation = 'Trong câu này, "pull through" diễn tả việc doanh nghiệp xoay xở và hồi phục thành công sau khi gặp khủng hoảng tài chính nghiêm trọng.';
+      } else if (lowerWord.contains('bailout')) {
+        phonetic = '/ˈbeɪlaʊt/';
+        definition = 'sự cứu trợ tài chính, gói cứu trợ';
+        contextExplanation = 'Ám chỉ khoản hỗ trợ tiền tệ khẩn cấp từ chính phủ giúp cứu doanh nghiệp khỏi nguy cơ phá sản.';
+      } else if (lowerWord.contains('legacy')) {
+        phonetic = '/ˈleɡəsi/';
+        definition = 'di sản, hệ thống cũ, đời trước';
+        contextExplanation = 'Ở đây "legacy systems" là các phần mềm hoặc máy tính cũ đã lỗi thời nhưng vẫn đang được doanh nghiệp sử dụng.';
+      } else if (lowerWord.contains('contingent')) {
+        phonetic = '/kənˈtɪndʒənt/';
+        definition = 'phụ thuộc vào, tùy thuộc vào';
+        contextExplanation = 'Cụm "contingent upon" nghĩa là thành công của dự án hoàn toàn phụ thuộc vào việc tích hợp hệ thống.';
+      } else if (lowerWord.contains('insidious')) {
+        phonetic = '/ɪnˈsɪdiəs/';
+        definition = 'âm thầm nguy hại, tiến triển ngấm ngầm';
+        contextExplanation = 'Miêu tả sự tàn phá, xói mòn bản ngã của nhân vật một cách từ từ, không ồn ào nhưng để lại hậu quả nghiêm trọng.';
+      } else if (lowerWord.contains('whistleblogger') || lowerWord.contains('whistleblower')) {
+        phonetic = '/ˈwɪslbləʊər/';
+        definition = 'người tố giác, người thổi còi';
+        contextExplanation = 'Người phát giác và báo cáo các hành vi tham nhũng, sai phạm nội bộ công ty ra ánh sáng.';
+      }
+      
+      return {
+        'word': word,
+        'phonetic': phonetic,
+        'vietnamese_definition': definition,
+        'context_explanation': contextExplanation,
+      };
+    }
+
+    final systemInstruction = '''
+You are a highly experienced English-Vietnamese dictionary compiler and bilingual language tutor.
+Given an English word or phrase and the context sentence it appears in, output a JSON object containing:
+1. The standard IPA phonetic pronunciation.
+2. The most appropriate Vietnamese translation/definition as it is used in that specific context.
+3. A detailed explanation in Vietnamese of how the word functions in that context sentence, what nuances it carries, and how to translate it properly.
+
+You must respond ONLY with a valid, clean JSON object. Do not wrap the JSON output in markdown formatting, do not include backticks, and do not include any prose outside the JSON structure.
+
+Expected Output JSON Schema:
+{
+  "word": "string",
+  "phonetic": "string",
+  "vietnamese_definition": "string (the core translation of the word/phrase)",
+  "context_explanation": "string (detailed explanation of the word's contextual meaning and nuances)"
+}
+''';
+
+    final prompt = 'Analyze the word/phrase: "$word"\nContext Sentence: "$contextSentence"';
+
+    try {
+      final model = GenerativeModel(
+        model: modelName,
+        apiKey: apiKey,
+        generationConfig: GenerationConfig(
+          responseMimeType: 'application/json',
+        ),
+      );
+
+      final content = [
+        Content.text(systemInstruction),
+        Content.text(prompt),
+      ];
+
+      final response = await model.generateContent(content);
+      final rawText = response.text;
+      if (rawText == null || rawText.isEmpty) {
+        throw Exception('Received empty response from Gemini.');
+      }
+
+      final cleanedJson = _cleanJsonString(rawText);
+      return json.decode(cleanedJson) as Map<String, dynamic>;
+    } catch (e) {
+      return {
+        'word': word,
+        'phonetic': '/.../',
+        'vietnamese_definition': 'Không tải được nghĩa trực tuyến.',
+        'context_explanation': 'Đã xảy ra lỗi khi kết nối với máy chủ AI: $e',
+      };
+    }
+  }
 }

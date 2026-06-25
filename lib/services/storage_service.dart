@@ -1,10 +1,13 @@
+import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_stats.dart';
+import '../models/saved_word.dart';
 
 class StorageService {
   static const String _keyApiKey = 'gemini_api_key';
   static const String _keyUseMockMode = 'use_mock_mode';
   static const String _keyStats = 'user_stats';
+  static const String _keyVocabulary = 'saved_vocabulary';
 
   final SharedPreferences _prefs;
 
@@ -53,5 +56,26 @@ class StorageService {
 
   Future<void> resetStats() async {
     await _prefs.remove(_keyStats);
+  }
+
+  // Vocabulary management
+  List<SavedWord> getVocabulary() {
+    final vocabStr = _prefs.getString(_keyVocabulary);
+    if (vocabStr == null) return [];
+    try {
+      final List<dynamic> decoded = json.decode(vocabStr);
+      return decoded.map((item) => SavedWord.fromJson(item as Map<String, dynamic>)).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<void> saveVocabulary(List<SavedWord> list) async {
+    final encoded = json.encode(list.map((item) => item.toJson()).toList());
+    await _prefs.setString(_keyVocabulary, encoded);
+  }
+
+  Future<void> clearVocabulary() async {
+    await _prefs.remove(_keyVocabulary);
   }
 }

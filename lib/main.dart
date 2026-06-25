@@ -6,6 +6,7 @@ import 'services/storage_service.dart';
 import 'services/ai_service.dart';
 import 'providers/settings_provider.dart';
 import 'providers/translation_provider.dart';
+import 'providers/vocabulary_provider.dart';
 import 'screens/dashboard_screen.dart';
 import 'theme/app_colors.dart';
 
@@ -24,6 +25,9 @@ void main() async {
         ),
         ChangeNotifierProvider<TranslationProvider>(
           create: (_) => TranslationProvider(storageService, aiService),
+        ),
+        ChangeNotifierProvider<VocabularyProvider>(
+          create: (_) => VocabularyProvider(storageService, aiService),
         ),
       ],
       child: const TranslationPracticeApp(),

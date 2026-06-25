@@ -15,6 +15,7 @@ class TranslationProvider extends ChangeNotifier {
   EvaluationResult? _evaluationResult;
   String? _currentLevel;
   String? _errorMessage;
+  String? _userTranslation;
 
   TranslationProvider(this._storageService, this._aiService) {
     _stats = _storageService.getStats();
@@ -28,6 +29,7 @@ class TranslationProvider extends ChangeNotifier {
   EvaluationResult? get evaluationResult => _evaluationResult;
   String? get currentLevel => _currentLevel;
   String? get errorMessage => _errorMessage;
+  String? get userTranslation => _userTranslation;
 
   // Set level and fetch a new sentence
   Future<void> generateNewSentence({
@@ -69,6 +71,7 @@ class TranslationProvider extends ChangeNotifier {
 
     _isEvaluating = true;
     _errorMessage = null;
+    _userTranslation = userTranslation;
     notifyListeners();
 
     try {
@@ -106,6 +109,7 @@ class TranslationProvider extends ChangeNotifier {
     _evaluationResult = null;
     _currentLevel = null;
     _errorMessage = null;
+    _userTranslation = null;
     notifyListeners();
   }
 

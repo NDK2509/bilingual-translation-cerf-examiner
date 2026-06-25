@@ -138,6 +138,60 @@ class EvaluationScreen extends StatelessWidget {
             ),
             const SizedBox(height: 28),
 
+            // Original English Sentence Card
+            Align(
+              alignment: Alignment.centerLeft,
+              child: const Text(
+                'Câu gốc tiếng Anh:',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textSecondary),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              decoration: AppColors.glassCardDecoration(
+                color: AppColors.surfaceElevated,
+              ),
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                translation.currentSentence?.englishSentence ?? '',
+                style: const TextStyle(
+                  fontSize: 16,
+                  height: 1.5,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // User's Translation Card
+            Align(
+              alignment: Alignment.centerLeft,
+              child: const Text(
+                'Bản dịch của bạn:',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textSecondary),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              decoration: AppColors.glassCardDecoration(
+                color: AppColors.surfaceElevated,
+              ),
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                translation.userTranslation ?? '',
+                style: const TextStyle(
+                  fontSize: 16,
+                  height: 1.5,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+
             // Professor's Feedback Card
             Align(
               alignment: Alignment.centerLeft,

@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/translation_provider.dart';
 import '../providers/settings_provider.dart';
+import '../providers/vocabulary_provider.dart';
 import '../theme/app_colors.dart';
 import 'practice_screen.dart';
 import 'settings_screen.dart';
+import 'vocabulary_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -184,36 +186,87 @@ class DashboardScreen extends StatelessWidget {
                 decoration: AppColors.glassCardDecoration(),
                 padding: const EdgeInsets.all(16),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Icon(Icons.school_rounded, color: AppColors.primary),
-                        ),
-                        const SizedBox(width: 16),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('Total Exercises Completed', style: TextStyle(fontWeight: FontWeight.w600)),
-                            Text(
-                              'B2: ${stats.levelDistribution['B2'] ?? 0}  |  C1: ${stats.levelDistribution['C1'] ?? 0}  |  C2: ${stats.levelDistribution['C2'] ?? 0}',
-                              style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
-                            ),
-                          ],
-                        ),
-                      ],
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.school_rounded, color: AppColors.primary),
                     ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Total Exercises Completed', style: TextStyle(fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 4),
+                          Text(
+                            'B2: ${stats.levelDistribution['B2'] ?? 0}  |  C1: ${stats.levelDistribution['C1'] ?? 0}  |  C2: ${stats.levelDistribution['C2'] ?? 0}',
+                            style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 16),
                     Text(
                       '${stats.totalCompleted}',
                       style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                     ),
                   ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              
+              // Saved Vocabulary Card
+              GestureDetector(
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const VocabularyScreen(),
+                    ),
+                  );
+                },
+                child: Container(
+                  width: double.infinity,
+                  decoration: AppColors.glassCardDecoration(),
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.accent.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.menu_book_rounded, color: AppColors.accent),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: const [
+                            Text('Saved Vocabulary', style: TextStyle(fontWeight: FontWeight.w600)),
+                            SizedBox(height: 4),
+                            Text(
+                              'Tap to practice or review your saved words',
+                              style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Consumer<VocabularyProvider>(
+                        builder: (context, vocabProvider, _) {
+                          return Text(
+                            '${vocabProvider.vocabulary.length}',
+                            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 32),
