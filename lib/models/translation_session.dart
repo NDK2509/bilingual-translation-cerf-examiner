@@ -11,11 +11,13 @@ class GeneratedSentence {
     required this.hint,
   });
 
+  String get sourceSentence => englishSentence;
+
   factory GeneratedSentence.fromJson(Map<String, dynamic> json) {
     return GeneratedSentence(
       action: json['action'] as String? ?? 'GENERATE',
       cefrLevel: json['cefr_level'] as String? ?? '',
-      englishSentence: json['english_sentence'] as String? ?? '',
+      englishSentence: (json['source_sentence'] ?? json['english_sentence']) as String? ?? '',
       hint: json['hint'] as String? ?? '',
     );
   }
@@ -25,6 +27,7 @@ class GeneratedSentence {
       'action': action,
       'cefr_level': cefrLevel,
       'english_sentence': englishSentence,
+      'source_sentence': englishSentence,
       'hint': hint,
     };
   }

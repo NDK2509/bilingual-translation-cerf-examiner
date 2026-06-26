@@ -49,6 +49,7 @@ class VocabularyProvider extends ChangeNotifier {
     required bool useMock,
     required String apiKey,
     required String modelName,
+    required bool translateToEnglish,
   }) async {
     _isLoadingDetails = true;
     notifyListeners();
@@ -60,6 +61,7 @@ class VocabularyProvider extends ChangeNotifier {
         useMock: useMock,
         apiKey: apiKey,
         modelName: modelName,
+        translateToEnglish: translateToEnglish,
       );
       return details;
     } finally {

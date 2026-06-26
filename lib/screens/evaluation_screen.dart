@@ -18,6 +18,7 @@ class EvaluationScreen extends StatelessWidget {
         apiKey: settings.apiKey,
         useMock: settings.useMockMode,
         modelName: settings.selectedModel,
+        translateToEnglish: settings.translateToEnglish,
       );
       // Pop evaluation screen to return to practice screen
       Navigator.of(context).pop();
@@ -138,12 +139,12 @@ class EvaluationScreen extends StatelessWidget {
             ),
             const SizedBox(height: 28),
 
-            // Original English Sentence Card
+            // Original Source Sentence Card
             Align(
               alignment: Alignment.centerLeft,
-              child: const Text(
-                'Câu gốc tiếng Anh:',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textSecondary),
+              child: Text(
+                settings.translateToEnglish ? 'Câu gốc tiếng Việt:' : 'Câu gốc tiếng Anh:',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textSecondary),
               ),
             ),
             const SizedBox(height: 8),
@@ -154,7 +155,7 @@ class EvaluationScreen extends StatelessWidget {
               ),
               padding: const EdgeInsets.all(16),
               child: Text(
-                translation.currentSentence?.englishSentence ?? '',
+                translation.currentSentence?.sourceSentence ?? '',
                 style: const TextStyle(
                   fontSize: 16,
                   height: 1.5,
@@ -235,9 +236,11 @@ class EvaluationScreen extends StatelessWidget {
             // Suggested Translations
             Align(
               alignment: Alignment.centerLeft,
-              child: const Text(
-                'Bản dịch đề xuất tham khảo:',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textSecondary),
+              child: Text(
+                settings.translateToEnglish
+                    ? 'Bản dịch đề xuất (Suggested translations):'
+                    : 'Bản dịch đề xuất tham khảo:',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textSecondary),
               ),
             ),
             const SizedBox(height: 8),

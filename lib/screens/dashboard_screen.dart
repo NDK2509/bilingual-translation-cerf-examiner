@@ -21,6 +21,7 @@ class DashboardScreen extends StatelessWidget {
       apiKey: settings.apiKey,
       useMock: settings.useMockMode,
       modelName: settings.selectedModel,
+      translateToEnglish: settings.translateToEnglish,
     );
 
     // Reset previous screen and navigate
@@ -48,28 +49,62 @@ class DashboardScreen extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'English - Vietnamese',
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: 1.2,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              settings.translateToEnglish
+                                  ? 'Vietnamese ➔ English'
+                                  : 'English ➔ Vietnamese',
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                letterSpacing: 1.2,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.swap_horiz_rounded,
+                                color: AppColors.primary,
+                                size: 20,
+                              ),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              onPressed: () {
+                                settings.updateTranslateToEnglish(!settings.translateToEnglish);
+                                ScaffoldMessenger.of(context).clearSnackBars();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      settings.translateToEnglish
+                                          ? 'Switched to Vietnamese ➔ English'
+                                          : 'Switched to English ➔ Vietnamese',
+                                    ),
+                                    behavior: SnackBarBehavior.floating,
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                              },
+                              tooltip: 'Swap translation direction',
+                            ),
+                          ],
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Translation practice',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textPrimary,
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Translation practice',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimary,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.settings_outlined, color: AppColors.textSecondary, size: 28),

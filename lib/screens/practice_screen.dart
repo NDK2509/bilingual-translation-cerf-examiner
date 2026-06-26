@@ -46,6 +46,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
       apiKey: settings.apiKey,
       useMock: settings.useMockMode,
       modelName: settings.selectedModel,
+      translateToEnglish: settings.translateToEnglish,
     );
 
     if (!mounted) return;
@@ -134,6 +135,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
                         apiKey: settings.apiKey,
                         useMock: settings.useMockMode,
                         modelName: settings.selectedModel,
+                        translateToEnglish: settings.translateToEnglish,
                       );
                     }
                   },
@@ -174,9 +176,11 @@ class _PracticeScreenState extends State<PracticeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Prompt Label
-              const Text(
-                'Translate this sentence into Vietnamese:',
-                style: TextStyle(
+              Text(
+                settings.translateToEnglish
+                    ? 'Translate this sentence into English:'
+                    : 'Translate this sentence into Vietnamese:',
+                style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textSecondary,
@@ -192,8 +196,8 @@ class _PracticeScreenState extends State<PracticeScreen> {
                 ),
                 padding: const EdgeInsets.all(20),
                 child: InteractiveSentence(
-                  sentence: sentence.englishSentence,
-                  onWordTapped: (word) => _showWordDefinitionBottomSheet(context, word, sentence.englishSentence),
+                  sentence: sentence.sourceSentence,
+                  onWordTapped: (word) => _showWordDefinitionBottomSheet(context, word, sentence.sourceSentence),
                 ),
               ),
               const SizedBox(height: 8),
@@ -293,8 +297,10 @@ class _PracticeScreenState extends State<PracticeScreen> {
                 maxLines: 5,
                 keyboardType: TextInputType.multiline,
                 style: const TextStyle(fontSize: 15, height: 1.5),
-                decoration: const InputDecoration(
-                  hintText: 'Nhập câu dịch tiếng Việt tại đây...',
+                decoration: InputDecoration(
+                  hintText: settings.translateToEnglish
+                      ? 'Nhập câu dịch tiếng Anh tại đây...'
+                      : 'Nhập câu dịch tiếng Việt tại đây...',
                   alignLabelWithHint: true,
                 ),
                 enabled: !translation.isEvaluating,
@@ -334,8 +340,10 @@ class _PracticeScreenState extends State<PracticeScreen> {
     final settings = Provider.of<SettingsProvider>(context, listen: false);
     final vocab = Provider.of<VocabularyProvider>(context, listen: false);
 
-    // Strip punctuation
-    final cleanWord = word.replaceAll(RegExp(r"[^a-zA-Z0-9'-]"), '').trim();
+    // Strip punctuation, supporting Vietnamese characters if in VN->EN mode
+    final cleanWord = settings.translateToEnglish
+        ? word.replaceAll(RegExp(r"[^a-zA-Z0-9àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ'-]"), '').trim()
+        : word.replaceAll(RegExp(r"[^a-zA-Z0-9'-]"), '').trim();
     if (cleanWord.isEmpty) return;
 
     showModalBottomSheet(
@@ -369,7 +377,10 @@ class InteractiveSentence extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final RegExp regExp = RegExp(r"([a-zA-Z0-9'-]+|[^a-zA-Z0-9\s]+|\s+)");
+    // Regex matching English and Vietnamese words, punctuation, and whitespaces
+    final RegExp regExp = RegExp(
+        r"([a-zA-Z0-9àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ'-]+|[^a-zA-Z0-9àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ\s]+|\s+)"
+    );
     final matches = regExp.allMatches(sentence).map((m) => m.group(0)!).toList();
 
     return Wrap(
@@ -377,7 +388,9 @@ class InteractiveSentence extends StatelessWidget {
       runSpacing: 6,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: matches.map((token) {
-        final isWord = RegExp(r"^[a-zA-Z0-9'-]+$").hasMatch(token);
+        final isWord = RegExp(
+            r"^[a-zA-Z0-9àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ'-]+$"
+        ).hasMatch(token);
         if (isWord) {
           return InkWell(
             onTap: () => onWordTapped(token),
@@ -438,7 +451,7 @@ class _WordDefinitionSheetState extends State<_WordDefinitionSheet> {
   @override
   void initState() {
     super.initState();
-    _fetchDetails();
+    Future.microtask(() => _fetchDetails());
   }
 
   Future<void> _fetchDetails() async {
@@ -449,6 +462,7 @@ class _WordDefinitionSheetState extends State<_WordDefinitionSheet> {
         useMock: widget.settings.useMockMode,
         apiKey: widget.settings.apiKey,
         modelName: widget.settings.selectedModel,
+        translateToEnglish: widget.settings.translateToEnglish,
       );
       if (mounted) {
         setState(() {
@@ -553,14 +567,17 @@ class _WordDefinitionSheetState extends State<_WordDefinitionSheet> {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        _details!['phonetic'] ?? '',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontStyle: FontStyle.italic,
-                          color: AppColors.textSecondary,
+                      if (_details!['phonetic'] != null && (_details!['phonetic'] as String).trim().isNotEmpty && _details!['phonetic'] != '/.../') ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          _details!['phonetic'] ?? '',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontStyle: FontStyle.italic,
+                            color: AppColors.textSecondary,
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ),

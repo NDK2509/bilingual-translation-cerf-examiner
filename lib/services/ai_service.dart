@@ -67,6 +67,69 @@ class AIService {
     }
   };
 
+  static final Map<String, List<Map<String, String>>> _mockSentencesVnToEn = {
+    'B2': [
+      {
+        'vietnamese_sentence': 'Mặc dù công ty đối mặt với những khó khăn tài chính nghiêm trọng, họ vẫn vượt qua được nhờ có gói cứu trợ kịp thời của chính phủ.',
+        'hint': 'Sử dụng cấu trúc "although" hoặc "despite", cụm từ "pull through" (vượt qua khó khăn) và cụm từ "government bailout" (gói cứu trợ tài chính).'
+      },
+      {
+        'vietnamese_sentence': 'Nếu chúng tôi biết cuộc họp bị hủy, chúng tôi đã không lặn lội đường xa dưới trời mưa như trút nước thế này.',
+        'hint': 'Sử dụng câu điều kiện loại 3 (Third Conditional) để nói về sự việc trái với quá khứ. Cụm "mưa như trút nước" dịch là "pouring rain".'
+      },
+    ],
+    'C1': [
+      {
+        'vietnamese_sentence': 'Thành công của dự án tùy thuộc vào việc tích hợp trơn tru giữa hạ tầng điện toán đám mây của chúng ta và các hệ thống sẵn có từ trước.',
+        'hint': 'Sử dụng cụm "contingent upon" (tùy thuộc vào), "seamless integration" (tích hợp trơn tru) và "legacy systems" (hệ thống cũ từ trước).'
+      },
+      {
+        'vietnamese_sentence': 'Nếu không nhờ sự tiết lộ kịp thời của người tố giác, hành vi tham nhũng có hệ thống trong công ty đã bị che giấu.',
+        'hint': 'Sử dụng cấu trúc đảo ngữ điều kiện loại 3 ("Had it not been for..."). Chú ý từ "whistleblower" (người tố giác) và "systemic corruption".'
+      },
+    ],
+    'C2': [
+      {
+        'vietnamese_sentence': 'Bài phát biểu của cô ấy là một bài học xuất sắc về mặt ngoại giao, khéo léo đổ lỗi mà không hề nêu đích danh những kẻ gièm pha.',
+        'hint': 'Sử dụng từ "masterclass" (bài học xuất sắc), "subtly shifting the blame" (khéo léo đổ lỗi) và "detractors" (những kẻ gièm pha).'
+      },
+      {
+        'vietnamese_sentence': 'Hành trình trượt dài vào điên loạn của nhân vật chính được miêu tả không phải là sự tách rời tức thời khỏi thế giới thực, mà là một sự băng hoại dần dần, âm thầm của cái tôi.',
+        'hint': 'Sử dụng cụm "descent into madness" (trượt dài vào điên loạn), "insidious erosion of the self" (bào mòn âm thầm của cái tôi) và liên từ "not as... but as...".'
+      },
+    ],
+  };
+
+  static final Map<String, Map<String, dynamic>> _mockEvaluationsVnToEn = {
+    'B2': {
+      'is_acceptable': true,
+      'score': 85,
+      'feedback': 'Bản dịch tiếng Anh khá tốt và truyền đạt đầy đủ ý nghĩa của câu gốc. Việc sử dụng cấu trúc "Although the company faced..." và cụm "pull through" rất chính xác. Bạn có thể cải thiện thêm độ trôi chảy bằng cách dùng đại từ thích hợp.',
+      'suggested_translations': [
+        'Although the company faced severe financial difficulties, they managed to pull through thanks to a timely government bailout.',
+        'Despite facing severe financial difficulties, the company managed to pull through thanks to a timely government bailout.'
+      ]
+    },
+    'C1': {
+      'is_acceptable': true,
+      'score': 88,
+      'feedback': 'Bản dịch đạt yêu cầu của trình độ C1. Bạn đã chuyển ngữ chính xác cụm "contingent upon" thành "tùy thuộc vào" trong tiếng Anh, sử dụng cụm danh từ "seamless integration" và "legacy systems" trôi chảy, tự nhiên.',
+      'suggested_translations': [
+        'The project\'s success is contingent upon the seamless integration of our cloud infrastructure with the legacy systems.',
+        'Success of the project is contingent upon the seamless integration of our cloud infrastructure with the legacy systems.'
+      ]
+    },
+    'C2': {
+      'is_acceptable': true,
+      'score': 92,
+      'feedback': 'Bản dịch xuất sắc! Thể hiện sự nhạy bén cao về mặt ngôn ngữ ở cấp độ C2. Việc dịch "sự băng hoại bản ngã âm thầm" thành "insidious erosion of the self" cực kỳ chính xác. Nhịp điệu câu văn tiếng Anh tự nhiên như người bản xứ.',
+      'suggested_translations': [
+        'The protagonist\'s descent into madness is portrayed not as a sudden break from reality, but as a slow, insidious erosion of the self.',
+        'The main character\'s descent into madness is depicted not as a sudden break from reality, but as a slow, insidious erosion of the self.'
+      ]
+    }
+  };
+
   // Helper to clean response strings from markdown wrappers
   String _cleanJsonString(String raw) {
     var cleaned = raw.trim();
@@ -88,25 +151,61 @@ class AIService {
     required String cefrLevel,
     required bool useMock,
     required String apiKey,
+    required bool translateToEnglish,
     String modelName = 'gemini-3.5-flash',
   }) async {
     if (useMock || apiKey.isEmpty) {
       // Delay to simulate API call
       await Future.delayed(const Duration(milliseconds: 1200));
-      final sentences = _mockSentences[cefrLevel] ?? _mockSentences['B2']!;
-      // Pick a random sentence from the pool
-      final index = DateTime.now().millisecond % sentences.length;
-      final selected = sentences[index];
-      return GeneratedSentence(
-        action: 'GENERATE',
-        cefrLevel: cefrLevel,
-        englishSentence: selected['english_sentence']!,
-        hint: selected['hint']!,
-      );
+      if (translateToEnglish) {
+        final sentences = _mockSentencesVnToEn[cefrLevel] ?? _mockSentencesVnToEn['B2']!;
+        final index = DateTime.now().millisecond % sentences.length;
+        final selected = sentences[index];
+        return GeneratedSentence(
+          action: 'GENERATE',
+          cefrLevel: cefrLevel,
+          englishSentence: selected['vietnamese_sentence']!,
+          hint: selected['hint']!,
+        );
+      } else {
+        final sentences = _mockSentences[cefrLevel] ?? _mockSentences['B2']!;
+        final index = DateTime.now().millisecond % sentences.length;
+        final selected = sentences[index];
+        return GeneratedSentence(
+          action: 'GENERATE',
+          cefrLevel: cefrLevel,
+          englishSentence: selected['english_sentence']!,
+          hint: selected['hint']!,
+        );
+      }
     }
 
     // Call Real Gemini API
-    final systemInstruction = '''
+    final systemInstruction = translateToEnglish
+        ? '''
+You are an expert bilingual English-Vietnamese language professor and elite translation examiner specializing in the CEFR language frameworks (B2, C1, C2).
+
+You handle two distinct operational actions for a Vietnamese-to-English translation practice application. Depending on the user's requested "action", process the logic strictly according to the corresponding ruleset below.
+
+You must respond ONLY with a valid, clean JSON object. Do not wrap the JSON output in markdown formatting (such as ```json), do not include backticks, and do not include any conversational prose outside the JSON structure.
+
+---
+
+Action A: "GENERATE"
+Use this action when a user wants a new sentence to translate.
+- Rules:
+  1. Generate a single, highly natural Vietnamese sentence representing a complexity level corresponding to the requested `cefr_level` (B2, C1, or C2) in English.
+  2. The sentence should require the user to employ B2/C1/C2 level grammatical structures, idioms, and vocabulary in English to translate it accurately.
+  3. Provide a brief contextual clue (`hint`) in Vietnamese highlighting a tricky nuance, grammar point, or vocabulary setup in English, without revealing the actual English vocabulary solutions.
+- Expected Output JSON Schema:
+  {
+    "action": "GENERATE",
+    "cefr_level": "string (B2, C1, or C2)",
+    "source_sentence": "string",
+    "hint": "string"
+  }
+'''
+        : '''
 You are an expert bilingual English-Vietnamese language professor and elite translation examiner specializing in the CEFR language frameworks (B2, C1, C2).
 
 You handle two distinct operational actions for an English-to-Vietnamese translation practice application. Depending on the user's requested "action", process the logic strictly according to the corresponding ruleset below.
@@ -125,7 +224,7 @@ Use this action when a user wants a new sentence to translate.
   {
     "action": "GENERATE",
     "cefr_level": "string (B2, C1, or C2)",
-    "english_sentence": "string",
+    "source_sentence": "string",
     "hint": "string"
   }
 ''';
@@ -167,30 +266,64 @@ Use this action when a user wants a new sentence to translate.
     required String userTranslation,
     required bool useMock,
     required String apiKey,
+    required bool translateToEnglish,
     String modelName = 'gemini-3.5-flash',
   }) async {
     if (useMock || apiKey.isEmpty) {
       // Delay to simulate API call
       await Future.delayed(const Duration(milliseconds: 1500));
-      if (userTranslation.trim().length < 8) {
+      if (userTranslation.trim().length < 5) {
         return EvaluationResult(
           action: 'EVALUATE',
           isAcceptable: false,
           score: 30,
           feedback: 'Bản dịch quá ngắn hoặc không hoàn thiện. Hãy cố dịch đầy đủ ý nghĩa của câu nguồn trước khi gửi đánh giá.',
           suggestedTranslations: [
-            'Vui lòng hoàn thành bản dịch đầy đủ dựa trên gợi ý từ bài học.'
+            translateToEnglish
+                ? 'Please complete the translation fully.'
+                : 'Vui lòng hoàn thành bản dịch đầy đủ dựa trên gợi ý từ bài học.'
           ],
         );
       }
 
       // Return a mock result appropriate for the level
-      final result = _mockEvaluations[cefrLevel] ?? _mockEvaluations['B2']!;
-      return EvaluationResult.fromJson(result);
+      if (translateToEnglish) {
+        final result = _mockEvaluationsVnToEn[cefrLevel] ?? _mockEvaluationsVnToEn['B2']!;
+        return EvaluationResult.fromJson(result);
+      } else {
+        final result = _mockEvaluations[cefrLevel] ?? _mockEvaluations['B2']!;
+        return EvaluationResult.fromJson(result);
+      }
     }
 
     // Call Real Gemini API
-    final systemInstruction = '''
+    final systemInstruction = translateToEnglish
+        ? '''
+You are an expert bilingual English-Vietnamese language professor and elite translation examiner specializing in the CEFR language frameworks (B2, C1, C2).
+
+You handle two distinct operational actions for a Vietnamese-to-English translation practice application. Depending on the user's requested "action", process the logic strictly according to the corresponding ruleset below.
+
+You must respond ONLY with a valid, clean JSON object. Do not wrap the JSON output in markdown formatting (such as ```json), do not include backticks, and do not include any conversational prose outside the JSON structure.
+
+---
+
+Action B: "EVALUATE"
+Use this action when evaluating a submitted user translation.
+- Rules:
+  1. Compare the Vietnamese source sentence `source_sentence` with the user's English translation `user_translation` based on the targeted `cefr_level`.
+  2. Be constructive but strict: For B2, allow minor stiffness if the fundamental meaning is intact. For C2, demand native-like flow, precise contextual tone, and exact register match in English.
+  3. Provide your `feedback` assessment completely in natural, encouraging Vietnamese. Explain errors, grammar mistakes, or stylistic choices in the English translation clearly.
+  4. Assign a numerical `score` from 0 to 100.
+- Expected Output JSON Schema:
+  {
+    "action": "EVALUATE",
+    "is_acceptable": boolean,
+    "score": integer (0 to 100),
+    "feedback": "string (Feedback text in Vietnamese)",
+    "suggested_translations": ["string (Option 1)", "string (Option 2)"]
+  }
+'''
+        : '''
 You are an expert bilingual English-Vietnamese language professor and elite translation examiner specializing in the CEFR language frameworks (B2, C1, C2).
 
 You handle two distinct operational actions for an English-to-Vietnamese translation practice application. Depending on the user's requested "action", process the logic strictly according to the corresponding ruleset below.
@@ -218,7 +351,7 @@ Use this action when evaluating a submitted user translation.
 
     final requestJson = json.encode({
       'cefr_level': cefrLevel,
-      'english_source': englishSource,
+      'source_sentence': englishSource,
       'user_translation': userTranslation,
     });
 
@@ -258,58 +391,96 @@ Use this action when evaluating a submitted user translation.
     required String contextSentence,
     required bool useMock,
     required String apiKey,
+    required bool translateToEnglish,
     String modelName = 'gemini-3.5-flash',
   }) async {
     if (useMock || apiKey.isEmpty) {
       // Delay to simulate network call
       await Future.delayed(const Duration(milliseconds: 1000));
       
-      final lowerWord = word.toLowerCase().replaceAll(RegExp(r'[^a-z\s]'), '');
-      
-      String phonetic = '/.../';
-      String definition = 'Định nghĩa giả lập cho từ "$word".';
-      String contextExplanation = 'Cách dùng đặc biệt trong ngữ cảnh câu này.';
-      
-      if (lowerWord.contains('pull') || lowerWord.contains('through')) {
-        phonetic = '/pʊl θruː/';
-        definition = 'vượt qua (một giai đoạn khó khăn, bệnh tật)';
-        contextExplanation = 'Trong câu này, "pull through" diễn tả việc doanh nghiệp xoay xở và hồi phục thành công sau khi gặp khủng hoảng tài chính nghiêm trọng.';
-      } else if (lowerWord.contains('bailout')) {
-        phonetic = '/ˈbeɪlaʊt/';
-        definition = 'sự cứu trợ tài chính, gói cứu trợ';
-        contextExplanation = 'Ám chỉ khoản hỗ trợ tiền tệ khẩn cấp từ chính phủ giúp cứu doanh nghiệp khỏi nguy cơ phá sản.';
-      } else if (lowerWord.contains('legacy')) {
-        phonetic = '/ˈleɡəsi/';
-        definition = 'di sản, hệ thống cũ, đời trước';
-        contextExplanation = 'Ở đây "legacy systems" là các phần mềm hoặc máy tính cũ đã lỗi thời nhưng vẫn đang được doanh nghiệp sử dụng.';
-      } else if (lowerWord.contains('contingent')) {
-        phonetic = '/kənˈtɪndʒənt/';
-        definition = 'phụ thuộc vào, tùy thuộc vào';
-        contextExplanation = 'Cụm "contingent upon" nghĩa là thành công của dự án hoàn toàn phụ thuộc vào việc tích hợp hệ thống.';
-      } else if (lowerWord.contains('insidious')) {
-        phonetic = '/ɪnˈsɪdiəs/';
-        definition = 'âm thầm nguy hại, tiến triển ngấm ngầm';
-        contextExplanation = 'Miêu tả sự tàn phá, xói mòn bản ngã của nhân vật một cách từ từ, không ồn ào nhưng để lại hậu quả nghiêm trọng.';
-      } else if (lowerWord.contains('whistleblogger') || lowerWord.contains('whistleblower')) {
-        phonetic = '/ˈwɪslbləʊər/';
-        definition = 'người tố giác, người thổi còi';
-        contextExplanation = 'Người phát giác và báo cáo các hành vi tham nhũng, sai phạm nội bộ công ty ra ánh sáng.';
+      if (translateToEnglish) {
+        final cleanWord = word.trim().toLowerCase();
+        
+        String definition = 'Định nghĩa giả lập cho từ tiếng Việt "$word".';
+        String contextExplanation = 'Cách dùng đặc biệt trong ngữ cảnh câu này.';
+        
+        if (cleanWord.contains('vượt qua')) {
+          definition = 'to pull through, overcome, pass';
+          contextExplanation = 'Trong ngữ cảnh này, "vượt qua" diễn tả việc công ty vượt qua khó khăn tài chính ("pull through").';
+        } else if (cleanWord.contains('cứu trợ')) {
+          definition = 'bailout, rescue, relief';
+          contextExplanation = 'Ám chỉ gói cứu trợ tài chính khẩn cấp từ chính phủ ("government bailout").';
+        } else if (cleanWord.contains('tùy thuộc') || cleanWord.contains('phụ thuộc')) {
+          definition = 'contingent upon, dependent on';
+          contextExplanation = 'Ở mức độ C1, "tùy thuộc vào" nên dịch là "contingent upon".';
+        } else if (cleanWord.contains('tích hợp')) {
+          definition = 'integrate, integration';
+          contextExplanation = 'Cụm từ "tích hợp trơn tru" dịch thành "seamless integration".';
+        } else if (cleanWord.contains('trượt dài')) {
+          definition = 'descent, slide';
+          contextExplanation = 'Cụm từ "trượt dài vào điên loạn" dịch là "descent into madness".';
+        } else if (cleanWord.contains('băng hoại')) {
+          definition = 'erosion, decay, degradation';
+          contextExplanation = 'Cụm "băng hoại bản ngã" dịch thành "insidious erosion of the self".';
+        } else if (cleanWord.contains('âm thầm')) {
+          definition = 'insidious, silent, stealthy';
+          contextExplanation = 'Từ "insidious" dùng để chỉ thứ gì đó diễn tiến âm thầm nhưng để lại tác hại vô cùng lớn.';
+        }
+        
+        return {
+          'word': word,
+          'phonetic': '',
+          'vietnamese_definition': definition,
+          'context_explanation': contextExplanation,
+        };
+      } else {
+        final lowerWord = word.toLowerCase().replaceAll(RegExp(r'[^a-z\s]'), '');
+        
+        String phonetic = '/.../';
+        String definition = 'Định nghĩa giả lập cho từ "$word".';
+        String contextExplanation = 'Cách dùng đặc biệt trong ngữ cảnh câu này.';
+        
+        if (lowerWord.contains('pull') || lowerWord.contains('through')) {
+          phonetic = '/pʊl θruː/';
+          definition = 'vượt qua (một giai đoạn khó khăn, bệnh tật)';
+          contextExplanation = 'Trong câu này, "pull through" diễn tả việc doanh nghiệp xoay xở và hồi phục thành công sau khi gặp khủng hoảng tài chính nghiêm trọng.';
+        } else if (lowerWord.contains('bailout')) {
+          phonetic = '/ˈbeɪlaʊt/';
+          definition = 'sự cứu trợ tài chính, gói cứu trợ';
+          contextExplanation = 'Ám chỉ khoản hỗ trợ tiền tệ khẩn cấp từ chính phủ giúp cứu doanh nghiệp khỏi nguy cơ phá sản.';
+        } else if (lowerWord.contains('legacy')) {
+          phonetic = '/ˈleɡəsi/';
+          definition = 'di sản, hệ thống cũ, đời trước';
+          contextExplanation = 'Ở đây "legacy systems" là các phần mềm hoặc máy tính cũ đã lỗi thời nhưng vẫn đang được doanh nghiệp sử dụng.';
+        } else if (lowerWord.contains('contingent')) {
+          phonetic = '/kənˈtɪndʒənt/';
+          definition = 'phụ thuộc vào, tùy thuộc vào';
+          contextExplanation = 'Cụm "contingent upon" nghĩa là thành công của dự án hoàn toàn phụ thuộc vào việc tích hợp hệ thống.';
+        } else if (lowerWord.contains('insidious')) {
+          phonetic = '/ɪnˈsɪdiəs/';
+          definition = 'âm thầm nguy hại, tiến triển ngấm ngầm';
+          contextExplanation = 'Miêu tả sự tàn phá, xói mòn bản ngã của nhân vật một cách từ từ, không ồn ào nhưng để lại hậu quả nghiêm trọng.';
+        } else if (lowerWord.contains('whistleblogger') || lowerWord.contains('whistleblower')) {
+          phonetic = '/ˈwɪslbləʊər/';
+          definition = 'người tố giác, người thổi còi';
+          contextExplanation = 'Người phát giác và báo cáo các hành vi tham nhũng, sai phạm nội bộ công ty ra ánh sáng.';
+        }
+        
+        return {
+          'word': word,
+          'phonetic': phonetic,
+          'vietnamese_definition': definition,
+          'context_explanation': contextExplanation,
+        };
       }
-      
-      return {
-        'word': word,
-        'phonetic': phonetic,
-        'vietnamese_definition': definition,
-        'context_explanation': contextExplanation,
-      };
     }
 
     final systemInstruction = '''
 You are a highly experienced English-Vietnamese dictionary compiler and bilingual language tutor.
-Given an English word or phrase and the context sentence it appears in, output a JSON object containing:
-1. The standard IPA phonetic pronunciation.
-2. The most appropriate Vietnamese translation/definition as it is used in that specific context.
-3. A detailed explanation in Vietnamese of how the word functions in that context sentence, what nuances it carries, and how to translate it properly.
+Given a word or phrase (which can be English or Vietnamese) and the context sentence it appears in, output a JSON object containing:
+1. The standard IPA phonetic pronunciation (if English).
+2. The most appropriate translation/definition as it is used in that specific context (English translation if the word is Vietnamese; Vietnamese translation if the word is English).
+3. A detailed explanation in Vietnamese of how the word functions in that context sentence, what nuances it carries, and how to translate it properly (including CEFR B2/C1/C2 suggestions if relevant).
 
 You must respond ONLY with a valid, clean JSON object. Do not wrap the JSON output in markdown formatting, do not include backticks, and do not include any prose outside the JSON structure.
 

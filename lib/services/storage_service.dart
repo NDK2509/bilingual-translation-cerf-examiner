@@ -8,6 +8,7 @@ class StorageService {
   static const String _keyUseMockMode = 'use_mock_mode';
   static const String _keyStats = 'user_stats';
   static const String _keyVocabulary = 'saved_vocabulary';
+  static const String _keyTranslateToEnglish = 'translate_to_english';
 
   final SharedPreferences _prefs;
 
@@ -35,6 +36,15 @@ class StorageService {
 
   Future<void> setUseMockMode(bool useMock) async {
     await _prefs.setBool(_keyUseMockMode, useMock);
+  }
+
+  // Translation direction management
+  bool getTranslateToEnglish() {
+    return _prefs.getBool(_keyTranslateToEnglish) ?? false;
+  }
+
+  Future<void> setTranslateToEnglish(bool value) async {
+    await _prefs.setBool(_keyTranslateToEnglish, value);
   }
 
   // User Stats management

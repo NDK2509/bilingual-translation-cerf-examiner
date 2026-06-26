@@ -7,10 +7,12 @@ class SettingsProvider extends ChangeNotifier {
   late String _apiKey;
   late bool _useMockMode;
   String _selectedModel = 'gemini-3.5-flash';
+  bool _translateToEnglish = false;
 
   SettingsProvider(this._storageService) {
     _apiKey = _storageService.getApiKey();
     _useMockMode = _storageService.getUseMockMode();
+    _translateToEnglish = _storageService.getTranslateToEnglish();
     // Default to mock mode if key is empty
     if (_apiKey.isEmpty && !_useMockMode) {
       _useMockMode = true;
@@ -21,6 +23,7 @@ class SettingsProvider extends ChangeNotifier {
   String get apiKey => _apiKey;
   bool get useMockMode => _useMockMode;
   String get selectedModel => _selectedModel;
+  bool get translateToEnglish => _translateToEnglish;
 
   Future<void> updateApiKey(String key) async {
     _apiKey = key.trim();
@@ -45,6 +48,12 @@ class SettingsProvider extends ChangeNotifier {
 
   void updateSelectedModel(String model) {
     _selectedModel = model;
+    notifyListeners();
+  }
+
+  Future<void> updateTranslateToEnglish(bool value) async {
+    _translateToEnglish = value;
+    await _storageService.setTranslateToEnglish(value);
     notifyListeners();
   }
 }
