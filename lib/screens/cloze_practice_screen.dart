@@ -33,16 +33,24 @@ class _ClozePracticeScreenState extends State<ClozePracticeScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surfaceElevated,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      backgroundColor: Colors.transparent,
       builder: (context) {
-        return _WordDefinitionSheet(
-          word: cleanWord,
-          contextSentence: contextSentence,
-          settings: settings,
-          vocab: vocab,
+        return Align(
+          alignment: Alignment.bottomCenter,
+          child: Container(
+            height: MediaQuery.of(context).size.height * 0.58,
+            constraints: const BoxConstraints(maxWidth: 480),
+            decoration: const BoxDecoration(
+              color: AppColors.surfaceElevated,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: _WordDefinitionSheet(
+              word: cleanWord,
+              contextSentence: contextSentence,
+              settings: settings,
+              vocab: vocab,
+            ),
+          ),
         );
       },
     );
@@ -84,25 +92,36 @@ class _ClozePracticeScreenState extends State<ClozePracticeScreen> {
     // 1. Loading state
     if (provider.isLoadingSentence) {
       return Scaffold(
+        backgroundColor: AppColors.background,
         body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
-                strokeWidth: 4,
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Generating ${provider.currentLevel ?? "Cloze"} challenge...',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Chờ trong giây lát...',
-                style: TextStyle(fontSize: 12, color: AppColors.textMuted),
-              ),
-            ],
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: Stack(
+              children: [
+                Positioned.fill(child: Container(decoration: const BoxDecoration(gradient: AppColors.bgGlow))),
+                Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                        strokeWidth: 4,
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        'Generating ${provider.currentLevel ?? "Cloze"} challenge...',
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Chờ trong giây lát...',
+                        style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       );
@@ -111,39 +130,64 @@ class _ClozePracticeScreenState extends State<ClozePracticeScreen> {
     // 2. Error state
     if (provider.errorMessage != null && provider.currentSentence == null) {
       return Scaffold(
-        appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0),
-        body: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ),
+        body: Center(
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: Stack(
               children: [
-                const Icon(Icons.error_outline_rounded, size: 64, color: AppColors.error),
-                const SizedBox(height: 16),
-                const Text(
-                  'Failed to load cloze exercise',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  provider.errorMessage!,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: () {
-                    if (provider.currentLevel != null) {
-                      provider.generateNewSentence(
-                        cefrLevel: provider.currentLevel!,
-                        apiKey: settings.apiKey,
-                        useMock: settings.useMockMode,
-                        modelName: settings.selectedModel,
-                        translateToEnglish: settings.translateToEnglish,
-                      );
-                    }
-                  },
-                  child: const Text('Try Again'),
+                Positioned.fill(child: Container(decoration: const BoxDecoration(gradient: AppColors.bgGlow))),
+                Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.error_outline_rounded, size: 64, color: AppColors.error),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Failed to load cloze exercise',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          provider.errorMessage!,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                        ),
+                        const SizedBox(height: 24),
+                        GestureDetector(
+                          onTap: () {
+                            if (provider.currentLevel != null) {
+                              provider.generateNewSentence(
+                                cefrLevel: provider.currentLevel!,
+                                apiKey: settings.apiKey,
+                                useMock: settings.useMockMode,
+                                modelName: settings.selectedModel,
+                                translateToEnglish: settings.translateToEnglish,
+                              );
+                            }
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                            decoration: BoxDecoration(
+                              gradient: AppColors.primaryGradient,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Text('Try Again', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -167,131 +211,178 @@ class _ClozePracticeScreenState extends State<ClozePracticeScreen> {
     final isAllFilled = provider.userAnswers.length >= sentence.blanks.length;
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text('${sentence.cefrLevel} Cloze Challenge'),
+        title: Text('${sentence.cefrLevel} Cloze Challenge', style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
+          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
           onPressed: () {
             provider.resetSession();
             Navigator.of(context).pop();
           },
         ),
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+      body: Center(
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 480),
+          decoration: BoxDecoration(
+            border: Border.symmetric(
+              vertical: BorderSide(
+                color: AppColors.border.withOpacity(0.3),
+                width: 1.0,
+              ),
+            ),
+          ),
+          child: Stack(
             children: [
-              // Direction Prompt
-              Text(
-                settings.translateToEnglish
-                    ? 'Translate the Vietnamese sentence by filling the blanks in English:'
-                    : 'Dịch câu tiếng Anh bằng cách điền từ tiếng Việt tương ứng:',
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              // Translation/Context sentence Card
-              Container(
-                width: double.infinity,
-                decoration: AppColors.glassCardDecoration(
-                  color: AppColors.surface,
-                ),
-                padding: const EdgeInsets.all(18),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: const [
-                        Icon(Icons.g_translate_rounded, color: AppColors.primary, size: 18),
-                        SizedBox(width: 8),
-                        Text(
-                          'Context Translation (Bản dịch ngữ cảnh)',
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textSecondary),
+              Positioned.fill(child: Container(decoration: const BoxDecoration(gradient: AppColors.bgGlow))),
+              SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Direction Prompt
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.primary.withOpacity(0.2)),
                         ),
+                        child: Text(
+                          settings.translateToEnglish
+                              ? 'Fill the blanks in English:'
+                              : 'Dịch câu tiếng Anh bằng cách điền từ:',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Translation/Context sentence Card
+                      Container(
+                        width: double.infinity,
+                        decoration: AppColors.glassCardDecoration(
+                          color: AppColors.surface,
+                        ),
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: const [
+                                Icon(Icons.g_translate_rounded, color: AppColors.primary, size: 18),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Context Translation (Bản dịch)',
+                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textSecondary),
+                                ),
+                              ],
+                            ),
+                            const Divider(color: AppColors.border, height: 20),
+                            InteractiveSentence(
+                              sentence: sentence.translation,
+                              onWordTapped: (w) => _showWordDefinitionBottomSheet(context, w, sentence.translation),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Cloze Masked Sentence Card
+                      const Text(
+                        'Complete this sentence:',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Container(
+                        width: double.infinity,
+                        decoration: AppColors.glassCardDecoration(
+                          color: AppColors.surface,
+                        ),
+                        padding: const EdgeInsets.all(20),
+                        child: _buildMaskedSentenceWidget(context, sentence, provider),
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: const [
+                          Icon(Icons.info_outline_rounded, size: 14, color: AppColors.textSecondary),
+                          SizedBox(width: 6),
+                          Text(
+                            'Tap options below to fill blanks. Tap words to look up.',
+                            style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Options & Hints Section
+                      if (!provider.isEvaluated) ...[
+                        _buildActiveBlankClue(sentence),
+                        const SizedBox(height: 20),
+                        _buildOptionsGrid(sentence, provider),
+                      ] else ...[
+                        _buildResultsCard(context, provider, settings),
                       ],
-                    ),
-                    const Divider(color: AppColors.border, height: 20),
-                    InteractiveSentence(
-                      sentence: sentence.translation,
-                      onWordTapped: (w) => _showWordDefinitionBottomSheet(context, w, sentence.translation),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
 
-              // Cloze Masked Sentence Card
-              const Text(
-                'Complete this sentence:',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Container(
-                width: double.infinity,
-                decoration: AppColors.glassCardDecoration(
-                  color: AppColors.surfaceElevated,
-                ),
-                padding: const EdgeInsets.all(20),
-                child: _buildMaskedSentenceWidget(context, sentence, provider),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: const [
-                  Icon(Icons.info_outline_rounded, size: 14, color: AppColors.textMuted),
-                  SizedBox(width: 6),
-                  Text(
-                    'Tap options below to fill blanks. Tap any word to look up.',
-                    style: TextStyle(fontSize: 12, color: AppColors.textMuted),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
+                      const SizedBox(height: 36),
 
-              // Options & Hints Section
-              if (!provider.isEvaluated) ...[
-                _buildActiveBlankClue(sentence),
-                const SizedBox(height: 16),
-                _buildOptionsGrid(sentence, provider),
-              ] else ...[
-                _buildResultsCard(context, provider, settings),
-              ],
-
-              const SizedBox(height: 32),
-
-              // Check Answer Button (only show if not evaluated)
-              if (!provider.isEvaluated)
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: provider.isChecking
-                      ? const Center(
-                          child: CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
-                          ),
-                        )
-                      : ElevatedButton(
-                          onPressed: isAllFilled ? () => _checkAnswers(context, provider) : null,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: isAllFilled ? AppColors.primary : AppColors.surface,
-                            foregroundColor: isAllFilled ? Colors.white : AppColors.textMuted,
-                            side: isAllFilled ? null : const BorderSide(color: AppColors.border),
-                            elevation: isAllFilled ? 4 : 0,
-                          ),
-                          child: Text(isAllFilled ? 'CHECK ANSWERS' : 'FILL ALL BLANKS'),
+                      // Check Answer Button (only show if not evaluated)
+                      if (!provider.isEvaluated)
+                        SizedBox(
+                          width: double.infinity,
+                          height: 56,
+                          child: provider.isChecking
+                              ? const Center(
+                                  child: CircularProgressIndicator(
+                                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                                  ),
+                                )
+                              : GestureDetector(
+                                  onTap: isAllFilled ? () => _checkAnswers(context, provider) : null,
+                                  child: Container(
+                                    alignment: Alignment.center,
+                                    decoration: BoxDecoration(
+                                      gradient: isAllFilled ? AppColors.primaryGradient : null,
+                                      color: isAllFilled ? null : AppColors.surface,
+                                      borderRadius: BorderRadius.circular(30),
+                                      border: isAllFilled ? null : Border.all(color: AppColors.border),
+                                      boxShadow: isAllFilled
+                                          ? [
+                                              BoxShadow(
+                                                color: AppColors.primary.withOpacity(0.3),
+                                                blurRadius: 15,
+                                                offset: const Offset(0, 4),
+                                              )
+                                            ]
+                                          : null,
+                                    ),
+                                    child: Text(
+                                      isAllFilled ? 'CHECK ANSWERS' : 'FILL ALL BLANKS',
+                                      style: TextStyle(
+                                        color: isAllFilled ? Colors.white : AppColors.textMuted,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                        letterSpacing: 1.0,
+                                      ),
+                                    ),
+                                  ),
+                                ),
                         ),
+                    ],
+                  ),
                 ),
+              ),
             ],
           ),
         ),
@@ -305,12 +396,11 @@ class _ClozePracticeScreenState extends State<ClozePracticeScreen> {
     ClozeSentence sentence,
     ClozeProvider provider,
   ) {
-    // We split the sentence by placeholders like {0}, {1}
     final RegExp regExp = RegExp(r"(\{\d+\})");
     final matches = regExp.allMatches(sentence.maskedSentence);
 
     if (matches.isEmpty) {
-      return Text(sentence.maskedSentence, style: const TextStyle(fontSize: 18));
+      return Text(sentence.maskedSentence, style: const TextStyle(fontSize: 18, color: AppColors.textPrimary));
     }
 
     final List<Widget> spans = [];
@@ -435,7 +525,7 @@ class _ClozePracticeScreenState extends State<ClozePracticeScreen> {
         border = Border.all(
           color: isSelected ? AppColors.primary : AppColors.borderLight,
           width: isSelected ? 2.0 : 1.5,
-          style: BorderStyle.solid, // Use solid border but style it nicely
+          style: BorderStyle.solid,
         );
       }
     }
@@ -484,14 +574,14 @@ class _ClozePracticeScreenState extends State<ClozePracticeScreen> {
     return Container(
       width: double.infinity,
       decoration: AppColors.glassCardDecoration(
-        color: AppColors.warning.withOpacity(0.06),
+        color: AppColors.surface,
         borderWidth: 1.0,
       ),
       padding: const EdgeInsets.all(16),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.lightbulb_rounded, color: AppColors.warning),
+          const Icon(Icons.lightbulb_rounded, color: AppColors.warning, size: 22),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -553,7 +643,6 @@ class _ClozePracticeScreenState extends State<ClozePracticeScreen> {
               borderRadius: BorderRadius.circular(16),
               onTap: () {
                 provider.selectAnswer(_activeBlankIndex, option);
-                // Auto-advance to next unfilled blank
                 _autoAdvanceBlank(sentence, provider);
               },
               child: Padding(
@@ -565,7 +654,7 @@ class _ClozePracticeScreenState extends State<ClozePracticeScreen> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: isSelected ? Colors.white : AppColors.textPrimary,
+                      color: isSelected ? Colors.black : AppColors.textPrimary,
                     ),
                   ),
                 ),
@@ -606,8 +695,8 @@ class _ClozePracticeScreenState extends State<ClozePracticeScreen> {
         // Score Gauge & Feedback Card
         Container(
           width: double.infinity,
-          decoration: AppColors.glassCardDecoration(),
-          padding: const EdgeInsets.all(20),
+          decoration: AppColors.glassCardDecoration(color: AppColors.surface, radius: 20),
+          padding: const EdgeInsets.all(24),
           child: Column(
             children: [
               Row(
@@ -616,7 +705,7 @@ class _ClozePracticeScreenState extends State<ClozePracticeScreen> {
                   Icon(
                     isPassed ? Icons.check_circle_outline_rounded : Icons.highlight_off_rounded,
                     color: statusColor,
-                    size: 28,
+                    size: 24,
                   ),
                   const SizedBox(width: 8),
                   Text(
@@ -624,7 +713,7 @@ class _ClozePracticeScreenState extends State<ClozePracticeScreen> {
                     style: TextStyle(
                       color: statusColor,
                       fontWeight: FontWeight.bold,
-                      fontSize: 16,
+                      fontSize: 15,
                     ),
                   ),
                 ],
@@ -637,32 +726,31 @@ class _ClozePracticeScreenState extends State<ClozePracticeScreen> {
                     children: [
                       const Text(
                         'Điểm Số',
-                        style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                        style: TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 6),
                       Text(
                         '$score%',
                         style: TextStyle(
-                          fontSize: 34,
-                          fontWeight: FontWeight.w800,
+                          fontSize: 32,
+                          fontWeight: FontWeight.w900,
                           color: statusColor,
                         ),
                       ),
                     ],
                   ),
-                  // Correct blanks breakdown
                   Column(
                     children: [
                       const Text(
                         'Số ô chính xác',
-                        style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                        style: TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 6),
                       Text(
                         '${_getCorrectCount(provider)} / ${provider.currentSentence?.blanks.length}',
                         style: const TextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900,
                           color: AppColors.textPrimary,
                         ),
                       ),
@@ -670,8 +758,6 @@ class _ClozePracticeScreenState extends State<ClozePracticeScreen> {
                   ),
                 ],
               ),
-              
-              // Key correction notes (if any incorrect answers)
               if (score < 100) ...[
                 const Divider(color: AppColors.border, height: 28),
                 const Align(
@@ -688,7 +774,7 @@ class _ClozePracticeScreenState extends State<ClozePracticeScreen> {
                   if (isCorrect) return const SizedBox.shrink();
 
                   return Padding(
-                    padding: const EdgeInsets.only(bottom: 6.0),
+                    padding: const EdgeInsets.only(bottom: 8.0),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -696,7 +782,7 @@ class _ClozePracticeScreenState extends State<ClozePracticeScreen> {
                         Expanded(
                           child: RichText(
                             text: TextSpan(
-                              style: const TextStyle(fontSize: 13, height: 1.4),
+                              style: const TextStyle(fontSize: 13, height: 1.4, color: AppColors.textPrimary),
                               children: [
                                 TextSpan(
                                   text: 'Chỗ trống ${b.index + 1}: Bạn chọn ',
@@ -739,7 +825,7 @@ class _ClozePracticeScreenState extends State<ClozePracticeScreen> {
                 },
                 style: TextButton.styleFrom(
                   side: const BorderSide(color: AppColors.border, width: 1.5),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
                 child: const Text(
@@ -750,12 +836,20 @@ class _ClozePracticeScreenState extends State<ClozePracticeScreen> {
             ),
             const SizedBox(width: 16),
             Expanded(
-              child: ElevatedButton(
-                onPressed: () => _nextChallenge(context, provider, settings),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+              child: GestureDetector(
+                onTap: () => _nextChallenge(context, provider, settings),
+                child: Container(
+                  height: 54,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    gradient: AppColors.primaryGradient,
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  child: const Text(
+                    'NEXT CHALLENGE',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14, letterSpacing: 0.5),
+                  ),
                 ),
-                child: const Text('NEXT CHALLENGE'),
               ),
             ),
           ],
@@ -779,7 +873,6 @@ class _ClozePracticeScreenState extends State<ClozePracticeScreen> {
   }
 }
 
-// Inline definition sheet widget (identical to translation definitions)
 class _WordDefinitionSheet extends StatefulWidget {
   final String word;
   final String contextSentence;
@@ -808,7 +901,7 @@ class _WordDefinitionSheetState extends State<_WordDefinitionSheet> {
     Future.microtask(() => _fetchDetails());
   }
 
-  Future<void> _fetchDetails() async {
+  Future<_WordDefinitionSheetState> _fetchDetails() async {
     try {
       final details = await widget.vocab.fetchWordDetails(
         word: widget.word,
@@ -832,6 +925,7 @@ class _WordDefinitionSheetState extends State<_WordDefinitionSheet> {
         });
       }
     }
+    return this;
   }
 
   Future<void> _toggleSave(bool isSaved) async {
@@ -875,8 +969,8 @@ class _WordDefinitionSheetState extends State<_WordDefinitionSheet> {
       padding: EdgeInsets.only(
         left: 24,
         right: 24,
-        top: 24,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 32,
+        top: 16,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -892,119 +986,147 @@ class _WordDefinitionSheetState extends State<_WordDefinitionSheet> {
               ),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           if (_isLoading) ...[
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 40.0),
+            const Expanded(
+              child: Center(
                 child: CircularProgressIndicator(
                   valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
                 ),
               ),
             ),
           ] else if (_error.isNotEmpty) ...[
-            Text('Lỗi: $_error', style: const TextStyle(color: AppColors.error)),
+            Expanded(
+              child: Center(
+                child: Text('Lỗi: $_error', style: const TextStyle(color: AppColors.error)),
+              ),
+            ),
           ] else if (_details != null) ...[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.word,
+            Flexible(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.word,
+                                style: const TextStyle(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              if (_details!['phonetic'] != null && (_details!['phonetic'] as String).trim().isNotEmpty && _details!['phonetic'] != '/.../') ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  _details!['phonetic'] ?? '',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontStyle: FontStyle.italic,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          icon: Icon(
+                            isSaved ? Icons.bookmark_added_rounded : Icons.bookmark_add_outlined,
+                            color: isSaved ? AppColors.primary : AppColors.textSecondary,
+                            size: 28,
+                          ),
+                          onPressed: () => _toggleSave(isSaved),
+                        ),
+                      ],
+                    ),
+                    const Divider(color: AppColors.border, height: 24),
+                    const Text(
+                      'Định nghĩa / Dịch nghĩa:',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+                      ),
+                      child: Text(
+                        _details!['vietnamese_definition'] ?? 'Không rõ nghĩa',
                         style: const TextStyle(
-                          fontSize: 28,
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: AppColors.textPrimary,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      if (_details!['phonetic'] != null && (_details!['phonetic'] as String).trim().isNotEmpty && _details!['phonetic'] != '/.../') ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          _details!['phonetic'] ?? '',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontStyle: FontStyle.italic,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                IconButton(
-                  icon: Icon(
-                    isSaved ? Icons.bookmark_added_rounded : Icons.bookmark_add_outlined,
-                    color: isSaved ? AppColors.success : AppColors.textSecondary,
-                    size: 28,
-                  ),
-                  onPressed: () => _toggleSave(isSaved),
-                ),
-              ],
-            ),
-            const Divider(color: AppColors.border, height: 32),
-            const Text(
-              'Định nghĩa / Dịch nghĩa:',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-                color: AppColors.textSecondary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.08),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColors.primary.withOpacity(0.2)),
-              ),
-              child: Text(
-                _details!['vietnamese_definition'] ?? 'Không rõ nghĩa',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Giải thích ngữ cảnh:',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _details!['context_explanation'] ?? 'Không có giải thích chi tiết.',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        height: 1.5,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                 ),
               ),
             ),
-            const SizedBox(height: 20),
-            const Text(
-              'Giải thích ngữ cảnh:',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-                color: AppColors.textSecondary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _details!['context_explanation'] ?? 'Không có giải thích chi tiết.',
-              style: const TextStyle(
-                fontSize: 14,
-                height: 1.4,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
               height: 52,
-              child: ElevatedButton.icon(
-                onPressed: () => _toggleSave(isSaved),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: isSaved ? AppColors.surface : AppColors.primary,
-                  side: isSaved ? const BorderSide(color: AppColors.border) : null,
-                ),
-                icon: Icon(isSaved ? Icons.check_circle_rounded : Icons.bookmark_add_rounded),
-                label: Text(
-                  isSaved ? 'SAVED TO PRACTICE' : 'SAVE WORD TO PRACTICE',
-                  style: TextStyle(
-                    color: isSaved ? AppColors.success : Colors.white,
+              child: GestureDetector(
+                onTap: () => _toggleSave(isSaved),
+                child: Container(
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    gradient: isSaved ? null : AppColors.primaryGradient,
+                    color: isSaved ? AppColors.surface : null,
+                    borderRadius: BorderRadius.circular(30),
+                    border: isSaved ? Border.all(color: AppColors.border) : null,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(isSaved ? Icons.check_circle_rounded : Icons.bookmark_add_rounded, color: isSaved ? AppColors.success : Colors.white),
+                      const SizedBox(width: 8),
+                      Text(
+                        isSaved ? 'SAVED TO PRACTICE' : 'SAVE WORD TO PRACTICE',
+                        style: TextStyle(
+                          color: isSaved ? AppColors.success : Colors.white,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -1016,7 +1138,6 @@ class _WordDefinitionSheetState extends State<_WordDefinitionSheet> {
   }
 }
 
-// InteractiveSentence parses the context translation so words inside can be tapped as well
 class InteractiveSentence extends StatelessWidget {
   final String sentence;
   final Function(String word) onWordTapped;
