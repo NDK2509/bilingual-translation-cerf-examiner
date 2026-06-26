@@ -8,28 +8,51 @@ import 'practice_screen.dart';
 import 'settings_screen.dart';
 import 'vocabulary_screen.dart';
 
-class DashboardScreen extends StatelessWidget {
+import '../providers/cloze_provider.dart';
+import 'cloze_practice_screen.dart';
+
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  String _practiceMode = 'translation'; // 'translation' or 'cloze'
+
   void _startPractice(BuildContext context, String cefrLevel) {
-    final translation = Provider.of<TranslationProvider>(context, listen: false);
     final settings = Provider.of<SettingsProvider>(context, listen: false);
 
-    // Trigger sentence generation
-    translation.generateNewSentence(
-      cefrLevel: cefrLevel,
-      apiKey: settings.apiKey,
-      useMock: settings.useMockMode,
-      modelName: settings.selectedModel,
-      translateToEnglish: settings.translateToEnglish,
-    );
-
-    // Reset previous screen and navigate
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => const PracticeScreen(),
-      ),
-    );
+    if (_practiceMode == 'cloze') {
+      final cloze = Provider.of<ClozeProvider>(context, listen: false);
+      cloze.generateNewSentence(
+        cefrLevel: cefrLevel,
+        apiKey: settings.apiKey,
+        useMock: settings.useMockMode,
+        modelName: settings.selectedModel,
+        translateToEnglish: settings.translateToEnglish,
+      );
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => const ClozePracticeScreen(),
+        ),
+      );
+    } else {
+      final translation = Provider.of<TranslationProvider>(context, listen: false);
+      translation.generateNewSentence(
+        cefrLevel: cefrLevel,
+        apiKey: settings.apiKey,
+        useMock: settings.useMockMode,
+        modelName: settings.selectedModel,
+        translateToEnglish: settings.translateToEnglish,
+      );
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => const PracticeScreen(),
+        ),
+      );
+    }
   }
 
   @override
@@ -302,6 +325,88 @@ class DashboardScreen extends StatelessWidget {
                       ),
                     ],
                   ),
+                ),
+              ),
+              const SizedBox(height: 32),
+
+              // Practice Mode Selector
+              const Text(
+                'Select Practice Mode',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                decoration: AppColors.glassCardDecoration(
+                  color: AppColors.surfaceElevated,
+                  radius: 12,
+                  borderWidth: 1,
+                ),
+                padding: const EdgeInsets.all(4),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _practiceMode = 'translation';
+                          });
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: _practiceMode == 'translation'
+                                ? AppColors.primary
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            'Bilingual Translation',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: _practiceMode == 'translation'
+                                  ? Colors.white
+                                  : AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _practiceMode = 'cloze';
+                          });
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: _practiceMode == 'cloze'
+                                ? AppColors.primary
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            'Cloze (Fill-in-blank)',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: _practiceMode == 'cloze'
+                                  ? Colors.white
+                                  : AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 32),

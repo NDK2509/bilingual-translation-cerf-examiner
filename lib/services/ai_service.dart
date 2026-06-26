@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import '../models/translation_session.dart';
+import '../models/cloze_session.dart';
 
 class AIService {
   // Pre-coded mock data for offline/no-key usage
@@ -130,6 +131,246 @@ class AIService {
     }
   };
 
+  static final Map<String, List<Map<String, dynamic>>> _mockClozeEn = {
+    'B2': [
+      {
+        'full_sentence': 'Although the company faced severe financial difficulties, they managed to pull through thanks to a timely government bailout.',
+        'masked_sentence': 'Although the company faced severe financial difficulties, they managed to {0} thanks to a timely government {1}.',
+        'vietnamese_translation': 'Mặc dù công ty đối mặt với những khó khăn tài chính nghiêm trọng, họ vẫn vượt qua được nhờ có gói cứu trợ kịp thời của chính phủ.',
+        'blanks': [
+          {
+            'index': 0,
+            'correct_answer': 'pull through',
+            'options': ['pull through', 'pull over', 'pull off', 'pull down'],
+            'hint': 'vượt qua khó khăn'
+          },
+          {
+            'index': 1,
+            'correct_answer': 'bailout',
+            'options': ['bailout', 'subsidy', 'investment', 'loan'],
+            'hint': 'gói cứu trợ tài chính'
+          }
+        ]
+      },
+      {
+        'full_sentence': 'If we had known the meeting was cancelled, we wouldn\'t have travelled all this way in the pouring rain.',
+        'masked_sentence': 'If we had known the meeting was cancelled, we wouldn\'t have travelled {0} in the {1}.',
+        'vietnamese_translation': 'Nếu chúng tôi biết cuộc họp bị hủy, chúng tôi đã không lặn lội đường xa dưới trời mưa như trút nước thế này.',
+        'blanks': [
+          {
+            'index': 0,
+            'correct_answer': 'all this way',
+            'options': ['all this way', 'this road', 'long distance', 'so far away'],
+            'hint': 'lặn lội đường xa/đến tận đây'
+          },
+          {
+            'index': 1,
+            'correct_answer': 'pouring rain',
+            'options': ['pouring rain', 'drizzling rain', 'heavy storm', 'wet weather'],
+            'hint': 'mưa như trút nước'
+          }
+        ]
+      }
+    ],
+    'C1': [
+      {
+        'full_sentence': 'The project\'s success is contingent upon the seamless integration of our cloud infrastructure with the legacy systems.',
+        'masked_sentence': 'The project\'s success is {0} upon the seamless {1} of our cloud infrastructure with the legacy systems.',
+        'vietnamese_translation': 'Thành công của dự án tùy thuộc vào việc tích hợp trơn tru giữa hạ tầng điện toán đám mây của chúng ta và các hệ thống sẵn có từ trước.',
+        'blanks': [
+          {
+            'index': 0,
+            'correct_answer': 'contingent',
+            'options': ['contingent', 'dependent', 'reliant', 'based'],
+            'hint': 'tùy thuộc vào (đi với upon)'
+          },
+          {
+            'index': 1,
+            'correct_answer': 'integration',
+            'options': ['integration', 'separation', 'connection', 'installation'],
+            'hint': 'sự tích hợp trơn tru (seamless...)'
+          }
+        ]
+      },
+      {
+        'full_sentence': 'Had it not been for the whistleblower\'s timely disclosure, the systemic corruption within the firm would have gone unnoticed.',
+        'masked_sentence': '{0} it not been for the whistleblower\'s timely disclosure, the systemic {1} within the firm would have gone unnoticed.',
+        'vietnamese_translation': 'Nếu không nhờ sự tiết lộ kịp thời của người tố giác, hành vi tham nhũng có hệ thống trong công ty đã bị che giấu.',
+        'blanks': [
+          {
+            'index': 0,
+            'correct_answer': 'Had',
+            'options': ['Had', 'If', 'Should', 'Were'],
+            'hint': 'Đảo ngữ câu điều kiện loại 3'
+          },
+          {
+            'index': 1,
+            'correct_answer': 'corruption',
+            'options': ['corruption', 'incompetence', 'governance', 'bribery'],
+            'hint': 'sự tham nhũng (systemic ...)'
+          }
+        ]
+      }
+    ],
+    'C2': [
+      {
+        'full_sentence': 'Her speech was a masterclass in diplomacy, subtly shifting the blame without ever explicitly naming her detractors.',
+        'masked_sentence': 'Her speech was a {0} in diplomacy, subtly shifting the blame without ever explicitly naming her {1}.',
+        'vietnamese_translation': 'Bài phát biểu của cô ấy là một bài học xuất sắc về mặt ngoại giao, khéo léo đổ lỗi mà không hề nêu đích danh những kẻ gièm pha.',
+        'blanks': [
+          {
+            'index': 0,
+            'correct_answer': 'masterclass',
+            'options': ['masterclass', 'lesson', 'lecture', 'guide'],
+            'hint': 'bài học xuất sắc/mẫu mực'
+          },
+          {
+            'index': 1,
+            'correct_answer': 'detractors',
+            'options': ['detractors', 'defenders', 'allies', 'advocates'],
+            'hint': 'những kẻ gièm pha/chỉ trích'
+          }
+        ]
+      },
+      {
+        'full_sentence': 'The protagonist\'s descent into madness is portrayed not as a sudden break from reality, but as a slow, insidious erosion of the self.',
+        'masked_sentence': 'The protagonist\'s {0} into madness is portrayed not as a sudden break from reality, but as a slow, {1} erosion of the self.',
+        'vietnamese_translation': 'Hành trình trượt dài vào điên loạn của nhân vật chính được miêu tả không phải là sự tách rời tức thời khỏi thế giới thực, mà là một sự bào mòn dần dần, âm thầm của cái tôi.',
+        'blanks': [
+          {
+            'index': 0,
+            'correct_answer': 'descent',
+            'options': ['descent', 'fall', 'journey', 'slide'],
+            'hint': 'hành trình đi xuống/trượt dài'
+          },
+          {
+            'index': 1,
+            'correct_answer': 'insidious',
+            'options': ['insidious', 'obvious', 'silent', 'gradual'],
+            'hint': 'ngấm ngầm/âm thầm nguy hại'
+          }
+        ]
+      }
+    ]
+  };
+
+  static final Map<String, List<Map<String, dynamic>>> _mockClozeVn = {
+    'B2': [
+      {
+        'full_sentence': 'Mặc dù công ty đối mặt với những khó khăn tài chính nghiêm trọng, họ vẫn vượt qua được nhờ có gói cứu trợ kịp thời của chính phủ.',
+        'masked_sentence': 'Mặc dù công ty đối mặt với những khó khăn tài chính nghiêm trọng, họ vẫn {0} được nhờ có {1} kịp thời của chính phủ.',
+        'vietnamese_translation': 'Although the company faced severe financial difficulties, they managed to pull through thanks to a timely government bailout.',
+        'blanks': [
+          {
+            'index': 0,
+            'correct_answer': 'vượt qua',
+            'options': ['vượt qua', 'tránh né', 'giải quyết', 'chi trả'],
+            'hint': 'to pull through'
+          },
+          {
+            'index': 1,
+            'correct_answer': 'gói cứu trợ',
+            'options': ['gói cứu trợ', 'khoản đầu tư', 'tiền vay', 'sự hỗ trợ'],
+            'hint': 'bailout'
+          }
+        ]
+      },
+      {
+        'full_sentence': 'Nếu chúng tôi biết cuộc họp bị hủy, chúng tôi đã không lặn lội đường xa dưới trời mưa như trút nước thế này.',
+        'masked_sentence': 'Nếu chúng tôi biết cuộc họp bị hủy, chúng tôi đã không lặn lội đường xa dưới trời {0} thế này.',
+        'vietnamese_translation': 'If we had known the meeting was cancelled, we wouldn\'t have travelled all this way in the pouring rain.',
+        'blanks': [
+          {
+            'index': 0,
+            'correct_answer': 'mưa như trút nước',
+            'options': ['mưa như trút nước', 'mưa phùn', 'bão bùng', 'nắng gắt'],
+            'hint': 'pouring rain'
+          }
+        ]
+      }
+    ],
+    'C1': [
+      {
+        'full_sentence': 'Thành công của dự án tùy thuộc vào việc tích hợp trơn tru giữa hạ tầng điện toán đám mây của chúng ta và các hệ thống sẵn có từ trước.',
+        'masked_sentence': 'Thành công của dự án {0} vào việc {1} trơn tru giữa hạ tầng điện toán đám mây của chúng ta và các hệ thống sẵn có từ trước.',
+        'vietnamese_translation': 'The project\'s success is contingent upon the seamless integration of our cloud infrastructure with the legacy systems.',
+        'blanks': [
+          {
+            'index': 0,
+            'correct_answer': 'tùy thuộc',
+            'options': ['tùy thuộc', 'dựa dẫm', 'quyết định', 'ảnh hưởng'],
+            'hint': 'is contingent upon'
+          },
+          {
+            'index': 1,
+            'correct_answer': 'tích hợp',
+            'options': ['tích hợp', 'chia rẽ', 'kết nối', 'nâng cấp'],
+            'hint': 'integration'
+          }
+        ]
+      },
+      {
+        'full_sentence': 'Nếu không nhờ sự tiết lộ kịp thời của người tố giác, hành vi tham nhũng có hệ thống trong công ty đã bị che giấu.',
+        'masked_sentence': 'Nếu không nhờ sự tiết lộ kịp thời của {0}, hành vi {1} có hệ thống trong công ty đã bị che giấu.',
+        'vietnamese_translation': 'Had it not been for the whistleblower\'s timely disclosure, the systemic corruption within the firm would have gone unnoticed.',
+        'blanks': [
+          {
+            'index': 0,
+            'correct_answer': 'người tố giác',
+            'options': ['người tố giác', 'nhân chứng', 'luật sư', 'nhân viên'],
+            'hint': 'whistleblower'
+          },
+          {
+            'index': 1,
+            'correct_answer': 'tham nhũng',
+            'options': ['tham nhũng', 'suy thoái', 'gian lận', 'hối lộ'],
+            'hint': 'corruption'
+          }
+        ]
+      }
+    ],
+    'C2': [
+      {
+        'full_sentence': 'Bài phát biểu của cô ấy là một bài học xuất sắc về mặt ngoại giao, khéo léo đổ lỗi mà không hề nêu đích danh những kẻ gièm pha.',
+        'masked_sentence': 'Bài phát biểu của cô ấy là một {0} về mặt ngoại giao, khéo léo đổ lỗi mà không hề nêu đích danh những kẻ {1}.',
+        'vietnamese_translation': 'Her speech was a masterclass in diplomacy, subtly shifting the blame without ever explicitly naming her detractors.',
+        'blanks': [
+          {
+            'index': 0,
+            'correct_answer': 'bài học xuất sắc',
+            'options': ['bài học xuất sắc', 'thất bại lớn', 'kế hoạch hoàn hảo', 'ví dụ thông thường'],
+            'hint': 'masterclass'
+          },
+          {
+            'index': 1,
+            'correct_answer': 'gièm pha',
+            'options': ['gièm pha', 'ủng hộ', 'đồng minh', 'bảo vệ'],
+            'hint': 'detractors'
+          }
+        ]
+      },
+      {
+        'full_sentence': 'Hành trình trượt dài vào điên loạn của nhân vật chính được miêu tả không phải là sự tách rời tức thời khỏi thế giới thực, mà là một sự bào mòn dần dần, âm thầm của cái tôi.',
+        'masked_sentence': 'Hành trình trượt dài vào điên loạn của nhân vật chính được miêu tả không phải là sự tách rời tức thời khỏi thế giới thực, mà là một sự {0} dần dần, {1} của cái tôi.',
+        'vietnamese_translation': 'The protagonist\'s descent into madness is portrayed not as a sudden break from reality, but as a slow, insidious erosion of the self.',
+        'blanks': [
+          {
+            'index': 0,
+            'correct_answer': 'bào mòn',
+            'options': ['bào mòn', 'phá vỡ', 'nâng cao', 'củng cố'],
+            'hint': 'erosion'
+          },
+          {
+            'index': 1,
+            'correct_answer': 'âm thầm',
+            'options': ['âm thầm', 'rõ ràng', 'đột ngột', 'nhanh chóng'],
+            'hint': 'insidious'
+          }
+        ]
+      }
+    ]
+  };
+
   // Helper to clean response strings from markdown wrappers
   String _cleanJsonString(String raw) {
     var cleaned = raw.trim();
@@ -256,6 +497,104 @@ Use this action when a user wants a new sentence to translate.
       return GeneratedSentence.fromJson(parsed);
     } catch (e) {
       throw Exception('Failed to generate sentence via Gemini: $e');
+    }
+  }
+
+  // Action Cloze: Generate Cloze Sentence
+  Future<ClozeSentence> generateClozeSentence({
+    required String cefrLevel,
+    required bool useMock,
+    required String apiKey,
+    required bool translateToEnglish,
+    String modelName = 'gemini-3.5-flash',
+  }) async {
+    if (useMock || apiKey.isEmpty) {
+      // Delay to simulate API call
+      await Future.delayed(const Duration(milliseconds: 1200));
+      final sentences = translateToEnglish
+          ? (_mockClozeEn[cefrLevel] ?? _mockClozeEn['B2']!)
+          : (_mockClozeVn[cefrLevel] ?? _mockClozeVn['B2']!);
+      final index = DateTime.now().millisecond % sentences.length;
+      final selected = sentences[index];
+      return ClozeSentence.fromJson(selected);
+    }
+
+    final systemInstruction = '''
+You are an expert bilingual English-Vietnamese language professor and elite translation examiner specializing in the CEFR language frameworks (B2, C1, C2).
+
+You generate high-quality language practice exercises for a mobile app. 
+Depending on the request parameters, generate a single cloze (fill-in-the-blank) exercise corresponding to the level: $cefrLevel.
+
+Here are the strict generation rules:
+1. If translateToEnglish is true:
+   - Generate a single natural, beautiful English sentence corresponding to the complexity level $cefrLevel.
+   - Choose 1 to 2 key advanced vocabulary words or grammatical phrasal verbs in this sentence to blank out.
+   - Replace these words with placeholders '{0}', '{1}'... in the `masked_sentence`.
+   - Provide the complete sentence in `full_sentence`.
+   - Provide a clean, natural Vietnamese translation of the entire sentence in `vietnamese_translation`.
+   - For each blank, provide:
+     * `index`: 0, 1, etc.
+     * `correct_answer`: The exact word/phrase from the sentence.
+     * `options`: A list of 4 options. They must be grammatically plausible alternatives for this level, and ONE of them MUST be the correct_answer. The options must be in English.
+     * `hint`: A brief clue/explanation in Vietnamese (e.g. meaning of the word in Vietnamese).
+2. If translateToEnglish is false:
+   - Generate a single natural Vietnamese sentence that represents a complexity level of $cefrLevel in translation.
+   - Choose 1 to 2 key phrases or words in this Vietnamese sentence to blank out.
+   - Replace these with placeholders '{0}', '{1}'... in the `masked_sentence`.
+   - Provide the complete Vietnamese sentence in `full_sentence`.
+   - Provide a clean, natural English translation of the entire sentence in `vietnamese_translation`.
+   - For each blank, provide:
+     * `index`: 0, 1, etc.
+     * `correct_answer`: The exact Vietnamese word/phrase.
+     * `options`: A list of 4 options in Vietnamese, ONE of which MUST be the correct_answer.
+     * `hint`: A brief clue in English (e.g. corresponding English phrasal verb or vocabulary).
+
+Expected Output JSON Schema:
+{
+  "cefr_level": "string ($cefrLevel)",
+  "full_sentence": "string",
+  "masked_sentence": "string",
+  "vietnamese_translation": "string",
+  "blanks": [
+    {
+      "index": integer,
+      "correct_answer": "string",
+      "options": ["string", "string", "string", "string"],
+      "hint": "string"
+    }
+  ]
+}
+
+You must respond ONLY with a valid, clean JSON object. Do not wrap the JSON output in markdown formatting (such as ```json), do not include backticks, and do not include any conversational prose outside the JSON structure.
+''';
+
+    final prompt = 'Generate a cloze exercise with CEFR level: $cefrLevel. Translate to English: $translateToEnglish.';
+
+    try {
+      final model = GenerativeModel(
+        model: modelName,
+        apiKey: apiKey,
+        generationConfig: GenerationConfig(
+          responseMimeType: 'application/json',
+        ),
+      );
+
+      final content = [
+        Content.text(systemInstruction),
+        Content.text(prompt),
+      ];
+
+      final response = await model.generateContent(content);
+      final rawText = response.text;
+      if (rawText == null || rawText.isEmpty) {
+        throw Exception('Received empty response from Gemini.');
+      }
+
+      final cleanedJson = _cleanJsonString(rawText);
+      final parsed = json.decode(cleanedJson) as Map<String, dynamic>;
+      return ClozeSentence.fromJson(parsed);
+    } catch (e) {
+      throw Exception('Failed to generate cloze challenge via Gemini: $e');
     }
   }
 
