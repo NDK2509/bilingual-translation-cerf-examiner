@@ -45,18 +45,21 @@ run_web() {
 
 run_android() {
     log_info "Detecting Android devices/emulators..."
-    # Get list of devices and filter for android/emulator
-    devices=$("$FLUTTER_BIN" devices | grep -E "android|emulator" || true)
-    if [ -z "$devices" ]; then
+    local target_device="$1"
+    
+    # Try to auto-detect the first connected Android device if none is passed
+    if [ -z "$target_device" ]; then
+        target_device=$("$FLUTTER_BIN" devices | grep -i "android" | head -n 1 | awk -F' • ' '{print $2}' | tr -d ' ' || true)
+    fi
+
+    if [ -n "$target_device" ]; then
+        log_info "Running app on Android device: $target_device"
+        "$FLUTTER_BIN" run -d "$target_device"
+    else
         log_warning "No active Android devices or emulators found."
         log_info "Attempting to run with standard Android target (will launch default emulator if available)..."
-    else
-        log_info "Found the following Android device(s):"
-        echo "$devices"
-        echo ""
+        "$FLUTTER_BIN" run -d android
     fi
-    log_info "Running app on Android..."
-    "$FLUTTER_BIN" run -d android
 }
 
 build_web() {
@@ -100,7 +103,7 @@ case "$CMD" in
         run_web
         ;;
     android)
-        run_android
+        run_android "$2"
         ;;
     build-web)
         build_web
