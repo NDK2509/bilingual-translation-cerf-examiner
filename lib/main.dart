@@ -45,7 +45,7 @@ class TranslationPracticeApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Bilingual translation CEFR examiner',
+      title: 'English4Fun',
       debugShowCheckedModeBanner: false,
       themeMode: ThemeMode.dark, // Force beautiful Dark Mode
       darkTheme: ThemeData(

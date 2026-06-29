@@ -79,18 +79,60 @@ show_devices() {
     "$FLUTTER_BIN" devices
 }
 
+install_release() {
+    log_info "Installing the Release APK to device..."
+    local target_device="$2"
+    
+    # Try to auto-detect the first connected Android device if none is passed
+    if [ -z "$target_device" ]; then
+        target_device=$("$FLUTTER_BIN" devices | grep -i "android" | head -n 1 | awk -F' • ' '{print $2}' | tr -d ' ' || true)
+    fi
+
+    # Build first to ensure release APK is present
+    build_apk
+
+    if [ -n "$target_device" ]; then
+        log_info "Installing APK to Android device: $target_device"
+        "$FLUTTER_BIN" install -d "$target_device"
+    else
+        log_warning "No active Android devices found. Attempting to install on default target..."
+        "$FLUTTER_BIN" install
+    fi
+}
+
+run_release() {
+    log_info "Building and running app in Release mode on Android..."
+    local target_device="$2"
+    
+    # Try to auto-detect the first connected Android device if none is passed
+    if [ -z "$target_device" ]; then
+        target_device=$("$FLUTTER_BIN" devices | grep -i "android" | head -n 1 | awk -F' • ' '{print $2}' | tr -d ' ' || true)
+    fi
+
+    if [ -n "$target_device" ]; then
+        log_info "Running in release mode on Android device: $target_device"
+        "$FLUTTER_BIN" run --release -d "$target_device"
+    else
+        log_warning "No active Android devices or emulators found."
+        log_info "Attempting to run with standard Android target in release mode..."
+        "$FLUTTER_BIN" run --release -d android
+    fi
+}
+
 show_help() {
     echo "Flutter Run & Build Helper Script"
     echo "================================="
     echo "Usage: ./run.sh [command]"
     echo ""
     echo "Commands:"
-    echo "  web         Run app on Web (Chrome)"
-    echo "  android     Run app on Android device/emulator"
-    echo "  build-web   Build production web files"
-    echo "  build-apk   Build release Android APK"
-    echo "  devices     List all connected devices"
-    echo "  help        Show this help screen"
+    echo "  web             Run app on Web (Chrome)"
+    echo "  android         Run app on Android device/emulator"
+    echo "  build-web       Build production web files"
+    echo "  build-apk       Build release Android APK"
+    echo "  install-release Build and Install Release APK to device"
+    echo "  run-release     Build and Run App in Release mode on device"
+    echo "  devices         List all connected devices"
+    echo "  help            Show this help screen"
     echo ""
     echo "If no command is provided, an interactive menu will be shown."
 }
@@ -111,6 +153,12 @@ case "$CMD" in
     build-apk)
         build_apk
         ;;
+    install-release)
+        install_release "$@"
+        ;;
+    run-release)
+        run_release "$@"
+        ;;
     devices)
         show_devices
         ;;
@@ -126,9 +174,11 @@ case "$CMD" in
         echo "2) Run on Android"
         echo "3) Build for Web"
         echo "4) Build Android APK (Release)"
-        echo "5) List Connected Devices"
-        echo "6) Exit"
-        echo -n "Choose an option (1-6): "
+        echo "5) Build and Install Release APK to device"
+        echo "6) Build and Run in Release Mode on device"
+        echo "7) List Connected Devices"
+        echo "8) Exit"
+        echo -n "Choose an option (1-8): "
         read -r choice
         
         case $choice in
@@ -136,8 +186,10 @@ case "$CMD" in
             2) run_android ;;
             3) build_web ;;
             4) build_apk ;;
-            5) show_devices ;;
-            6) log_info "Exiting."; exit 0 ;;
+            5) install_release ;;
+            6) run_release ;;
+            7) show_devices ;;
+            8) log_info "Exiting."; exit 0 ;;
             *) log_error "Invalid option."; exit 1 ;;
         esac
         ;;
