@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import '../models/translation_session.dart';
 import '../models/cloze_session.dart';
+import '../models/word_match_session.dart';
 
 class AIService {
   // Pre-coded mock data for offline/no-key usage
@@ -597,6 +598,135 @@ You must respond ONLY with a valid, clean JSON object. Do not wrap the JSON outp
       return ClozeSentence.fromJson(parsed);
     } catch (e) {
       throw Exception('Failed to generate cloze challenge via Gemini: $e');
+    }
+  }
+
+  // Mock data for Word Match exercises
+  static final Map<String, List<Map<String, dynamic>>> _mockWordMatch = {
+    'B2': [
+      {
+        'cefr_level': 'B2',
+        'sentence': 'The government implemented a comprehensive plan to tackle the housing crisis.',
+        'target_word': 'comprehensive',
+        'match_type': 'synonym',
+        'correct_answer': 'thorough',
+        'options': ['thorough', 'brief', 'partial', 'limited'],
+        'translation': 'Chính phủ đã thực hiện một kế hoạch toàn diện để giải quyết cuộc khủng hoảng nhà ở.',
+        'explanation': '"Comprehensive" means covering all or nearly all elements. "Thorough" is the closest synonym, meaning complete with regard to every detail.',
+      },
+      {
+        'cefr_level': 'B2',
+        'sentence': 'She was reluctant to share her personal information with strangers online.',
+        'target_word': 'reluctant',
+        'match_type': 'antonym',
+        'correct_answer': 'eager',
+        'options': ['hesitant', 'eager', 'cautious', 'nervous'],
+        'translation': 'Cô ấy miễn cưỡng chia sẻ thông tin cá nhân với người lạ trên mạng.',
+        'explanation': '"Reluctant" means unwilling or hesitant. Its antonym "eager" means keen or enthusiastic to do something.',
+      },
+    ],
+    'C1': [
+      {
+        'cefr_level': 'C1',
+        'sentence': 'The investigation revealed a pervasive culture of corruption within the organization.',
+        'target_word': 'pervasive',
+        'match_type': 'synonym',
+        'correct_answer': 'widespread',
+        'options': ['widespread', 'rare', 'subtle', 'minor'],
+        'translation': 'Cuộc điều tra tiết lộ một nền văn hóa tham nhũng tràn lan trong tổ chức.',
+        'explanation': '"Pervasive" means spreading widely throughout an area or group. "Widespread" is the closest synonym.',
+      },
+    ],
+    'C2': [
+      {
+        'cefr_level': 'C2',
+        'sentence': 'His ostensibly philanthropic endeavours were merely a veneer for his insatiable avarice.',
+        'target_word': 'avarice',
+        'match_type': 'antonym',
+        'correct_answer': 'generosity',
+        'options': ['generosity', 'ambition', 'frugality', 'modesty'],
+        'translation': 'Những nỗ lực bề ngoài mang tính từ thiện của anh ta chỉ là lớp vỏ che đậy lòng tham vô đáy.',
+        'explanation': '"Avarice" means extreme greed for wealth. Its antonym "generosity" means the quality of being kind and willing to give.',
+      },
+    ],
+  };
+
+  // Action: Generate Word Match Exercise
+  Future<WordMatchExercise> generateWordMatchExercise({
+    required String cefrLevel,
+    required bool useMock,
+    required String apiKey,
+    required bool translateToEnglish,
+    String? topic,
+    String modelName = 'gemini-3.5-flash',
+  }) async {
+    if (useMock || apiKey.isEmpty) {
+      await Future.delayed(const Duration(milliseconds: 1200));
+      final exercises = _mockWordMatch[cefrLevel] ?? _mockWordMatch['B2']!;
+      final mockItem = (exercises..shuffle()).first;
+      return WordMatchExercise.fromJson(mockItem);
+    }
+
+    final topicInstruction = (topic != null && topic.trim().isNotEmpty)
+        ? "The sentence MUST be related to the topic: '${topic.trim()}'."
+        : '';
+
+    final systemInstruction = '''
+You are an expert English-Vietnamese language professor specializing in CEFR vocabulary exercises (B2, C1, C2).
+
+Generate a Word Match exercise where the user must identify a synonym or antonym.
+
+Rules:
+1. Generate a natural, contextual English sentence at the $cefrLevel CEFR level.
+2. Pick ONE advanced word from the sentence as the target word. The word should be a vocabulary item appropriate for the $cefrLevel level.
+3. Randomly decide whether the exercise asks for a SYNONYM or an ANTONYM (match_type: "synonym" or "antonym").
+4. Provide exactly 4 options. ONE must be the correct synonym/antonym. The other 3 must be plausible distractors.
+5. Provide a Vietnamese translation of the full sentence.
+6. Provide a brief English explanation of WHY the correct answer is the right synonym/antonym.
+$topicInstruction
+
+Expected Output JSON Schema:
+{
+  "cefr_level": "string ($cefrLevel)",
+  "sentence": "string (The full English sentence)",
+  "target_word": "string (The bolded/highlighted word)",
+  "match_type": "string (synonym or antonym)",
+  "correct_answer": "string (The correct synonym or antonym)",
+  "options": ["string", "string", "string", "string"],
+  "translation": "string (Vietnamese translation of the sentence)",
+  "explanation": "string (Brief explanation in English)"
+}
+
+You must respond ONLY with a valid, clean JSON object. Do not wrap the JSON output in markdown formatting (such as ```json), do not include backticks, and do not include any conversational prose outside the JSON structure.
+''';
+
+    final prompt = 'Generate a word match exercise with CEFR level: $cefrLevel.${(topic != null && topic.trim().isNotEmpty) ? " The sentence MUST be related to the topic: '${topic.trim()}'." : ""}';
+
+    try {
+      final model = GenerativeModel(
+        model: modelName,
+        apiKey: apiKey,
+        generationConfig: GenerationConfig(
+          responseMimeType: 'application/json',
+        ),
+      );
+
+      final content = [
+        Content.text(systemInstruction),
+        Content.text(prompt),
+      ];
+
+      final response = await model.generateContent(content);
+      final rawText = response.text;
+      if (rawText == null || rawText.isEmpty) {
+        throw Exception('Received empty response from Gemini.');
+      }
+
+      final cleanedJson = _cleanJsonString(rawText);
+      final parsed = json.decode(cleanedJson) as Map<String, dynamic>;
+      return WordMatchExercise.fromJson(parsed);
+    } catch (e) {
+      throw Exception('Failed to generate word match exercise via Gemini: $e');
     }
   }
 

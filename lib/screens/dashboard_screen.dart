@@ -9,7 +9,9 @@ import 'settings_screen.dart';
 import 'vocabulary_screen.dart';
 
 import '../providers/cloze_provider.dart';
+import '../providers/word_match_provider.dart';
 import 'cloze_practice_screen.dart';
+import 'word_match_practice_screen.dart';
 import 'topic_selection_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -20,7 +22,9 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  String _practiceMode = 'translation'; // 'translation' or 'cloze'
+  String _practiceMode = 'translation'; // 'translation', 'cloze', or 'wordmatch'
+
+  static const List<String> _modes = ['translation', 'cloze', 'wordmatch'];
 
   void _startPractice(BuildContext context, String cefrLevel) {
     final settings = Provider.of<SettingsProvider>(context, listen: false);
@@ -39,6 +43,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
       Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => const ClozePracticeScreen(),
+        ),
+      );
+    } else if (_practiceMode == 'wordmatch') {
+      final wm = Provider.of<WordMatchProvider>(context, listen: false);
+      wm.generateNewExercise(
+        cefrLevel: cefrLevel,
+        apiKey: settings.apiKey,
+        useMock: settings.useMockMode,
+        modelName: settings.selectedModel,
+        translateToEnglish: settings.translateToEnglish,
+        topic: topicArg,
+      );
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => const WordMatchPracticeScreen(),
         ),
       );
     } else {
@@ -343,87 +362,46 @@ class _DashboardScreenState extends State<DashboardScreen> {
           const SizedBox(height: 12),
           Container(
             decoration: AppColors.premiumCardDecoration(radius: 20),
-            padding: const EdgeInsets.all(6),
-            height: 56,
-            child: Stack(
-              children: [
-                AnimatedAlign(
-                  alignment: _practiceMode == 'translation'
-                      ? Alignment.centerLeft
-                      : Alignment.centerRight,
-                  duration: const Duration(milliseconds: 250),
-                  curve: Curves.easeInOutCubic,
-                  child: FractionallySizedBox(
-                    widthFactor: 0.5,
-                    heightFactor: 1.0,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(15),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.primary.withOpacity(0.4),
-                            blurRadius: 16,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                Row(
+            padding: const EdgeInsets.all(5),
+            height: 52,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final modeIndex = _modes.indexOf(_practiceMode);
+                final tabWidth = constraints.maxWidth / _modes.length;
+
+                return Stack(
                   children: [
-                    Expanded(
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () {
-                          setState(() {
-                            _practiceMode = 'translation';
-                          });
-                        },
-                        child: Center(
-                          child: AnimatedDefaultTextStyle(
-                            duration: const Duration(milliseconds: 250),
-                            curve: Curves.easeInOutCubic,
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                              color: _practiceMode == 'translation'
-                                  ? Colors.white
-                                  : AppColors.textSecondary,
+                    AnimatedPositioned(
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeInOutCubic,
+                      left: tabWidth * modeIndex,
+                      top: 0,
+                      bottom: 0,
+                      width: tabWidth,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(14),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary.withOpacity(0.4),
+                              blurRadius: 14,
+                              offset: const Offset(0, 2),
                             ),
-                            child: const Text('Bilingual Translation'),
-                          ),
+                          ],
                         ),
                       ),
                     ),
-                    Expanded(
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () {
-                          setState(() {
-                            _practiceMode = 'cloze';
-                          });
-                        },
-                        child: Center(
-                          child: AnimatedDefaultTextStyle(
-                            duration: const Duration(milliseconds: 250),
-                            curve: Curves.easeInOutCubic,
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                              color: _practiceMode == 'cloze'
-                                  ? Colors.white
-                                  : AppColors.textSecondary,
-                            ),
-                            child: const Text('Cloze (Fill-in-blank)'),
-                          ),
-                        ),
-                      ),
+                    Row(
+                      children: [
+                        _buildModeTab('translation', 'Translation'),
+                        _buildModeTab('cloze', 'Cloze'),
+                        _buildModeTab('wordmatch', 'Word Match'),
+                      ],
                     ),
                   ],
-                ),
-              ],
+                );
+              },
             ),
           ),
           const SizedBox(height: 36),
@@ -645,6 +623,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildModeTab(String mode, String label) {
+    final isActive = _practiceMode == mode;
+    return Expanded(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          setState(() {
+            _practiceMode = mode;
+          });
+        },
+        child: Center(
+          child: AnimatedDefaultTextStyle(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeInOutCubic,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+              color: isActive ? Colors.white : AppColors.textSecondary,
+            ),
+            child: Text(label),
           ),
         ),
       ),
