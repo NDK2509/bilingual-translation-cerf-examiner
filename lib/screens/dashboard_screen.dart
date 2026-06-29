@@ -344,83 +344,84 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Container(
             decoration: AppColors.premiumCardDecoration(radius: 20),
             padding: const EdgeInsets.all(6),
-            child: Row(
+            height: 56,
+            child: Stack(
               children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _practiceMode = 'translation';
-                      });
-                    },
+                AnimatedAlign(
+                  alignment: _practiceMode == 'translation'
+                      ? Alignment.centerLeft
+                      : Alignment.centerRight,
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeInOutCubic,
+                  child: FractionallySizedBox(
+                    widthFactor: 0.5,
+                    heightFactor: 1.0,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(
-                        color: _practiceMode == 'translation'
-                            ? AppColors.primary
-                            : Colors.transparent,
+                        color: AppColors.primary,
                         borderRadius: BorderRadius.circular(15),
-                        boxShadow: _practiceMode == 'translation'
-                            ? [
-                                BoxShadow(
-                                  color: AppColors.primary.withOpacity(0.45),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 2),
-                                )
-                              ]
-                            : null,
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        'Bilingual Translation',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                          color: _practiceMode == 'translation'
-                              ? Colors.white
-                              : AppColors.textSecondary,
-                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withOpacity(0.4),
+                            blurRadius: 16,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                     ),
                   ),
                 ),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _practiceMode = 'cloze';
-                      });
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        color: _practiceMode == 'cloze'
-                            ? AppColors.primary
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.circular(15),
-                        boxShadow: _practiceMode == 'cloze'
-                            ? [
-                                BoxShadow(
-                                  color: AppColors.primary.withOpacity(0.45),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 2),
-                                )
-                              ]
-                            : null,
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        'Cloze (Fill-in-blank)',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                          color: _practiceMode == 'cloze'
-                              ? Colors.white
-                              : AppColors.textSecondary,
+                Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () {
+                          setState(() {
+                            _practiceMode = 'translation';
+                          });
+                        },
+                        child: Center(
+                          child: AnimatedDefaultTextStyle(
+                            duration: const Duration(milliseconds: 250),
+                            curve: Curves.easeInOutCubic,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              color: _practiceMode == 'translation'
+                                  ? Colors.white
+                                  : AppColors.textSecondary,
+                            ),
+                            child: const Text('Bilingual Translation'),
+                          ),
                         ),
                       ),
                     ),
-                  ),
+                    Expanded(
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () {
+                          setState(() {
+                            _practiceMode = 'cloze';
+                          });
+                        },
+                        child: Center(
+                          child: AnimatedDefaultTextStyle(
+                            duration: const Duration(milliseconds: 250),
+                            curve: Curves.easeInOutCubic,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              color: _practiceMode == 'cloze'
+                                  ? Colors.white
+                                  : AppColors.textSecondary,
+                            ),
+                            child: const Text('Cloze (Fill-in-blank)'),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
