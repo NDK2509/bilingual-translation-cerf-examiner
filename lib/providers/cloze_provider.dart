@@ -42,6 +42,7 @@ class ClozeProvider extends ChangeNotifier {
     required bool useMock,
     required String modelName,
     required bool translateToEnglish,
+    String? topic,
   }) async {
     _isLoadingSentence = true;
     _errorMessage = null;
@@ -58,6 +59,7 @@ class ClozeProvider extends ChangeNotifier {
         apiKey: apiKey,
         modelName: modelName,
         translateToEnglish: translateToEnglish,
+        topic: topic,
       );
     } catch (e) {
       _errorMessage = e.toString();

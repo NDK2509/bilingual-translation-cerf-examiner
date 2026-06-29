@@ -10,6 +10,7 @@ import 'vocabulary_screen.dart';
 
 import '../providers/cloze_provider.dart';
 import 'cloze_practice_screen.dart';
+import 'topic_selection_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -23,6 +24,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   void _startPractice(BuildContext context, String cefrLevel) {
     final settings = Provider.of<SettingsProvider>(context, listen: false);
+    final topicArg = settings.selectedTopic;
 
     if (_practiceMode == 'cloze') {
       final cloze = Provider.of<ClozeProvider>(context, listen: false);
@@ -32,6 +34,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         useMock: settings.useMockMode,
         modelName: settings.selectedModel,
         translateToEnglish: settings.translateToEnglish,
+        topic: topicArg,
       );
       Navigator.of(context).push(
         MaterialPageRoute(
@@ -46,6 +49,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         useMock: settings.useMockMode,
         modelName: settings.selectedModel,
         translateToEnglish: settings.translateToEnglish,
+        topic: topicArg,
       );
       Navigator.of(context).push(
         MaterialPageRoute(
@@ -421,6 +425,84 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ],
             ),
           ),
+          const SizedBox(height: 36),
+
+          // Topic Selector Card
+          const Text(
+            'Practice Topic',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          GestureDetector(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const TopicSelectionScreen(),
+                ),
+              );
+            },
+            child: Container(
+              decoration: AppColors.premiumCardDecoration(radius: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.topic_outlined,
+                    color: AppColors.primary,
+                    size: 24,
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          settings.selectedTopic != null && settings.selectedTopic!.isNotEmpty
+                              ? settings.selectedTopic!
+                              : 'Any Topic (Random)',
+                          style: const TextStyle(
+                            fontSize: 15,
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Tap to choose or type a custom topic',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    color: AppColors.textSecondary,
+                    size: 16,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (settings.useMockMode) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: const [
+                Icon(Icons.info_outline_rounded, size: 12, color: AppColors.warning),
+                SizedBox(width: 6),
+                Text(
+                  'Mock mode is active. Topic filtering will not apply.',
+                  style: TextStyle(fontSize: 10, color: AppColors.warning),
+                ),
+              ],
+            ),
+          ],
           const SizedBox(height: 36),
 
           // Level Select Header

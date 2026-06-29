@@ -38,6 +38,7 @@ class TranslationProvider extends ChangeNotifier {
     required bool useMock,
     required String modelName,
     required bool translateToEnglish,
+    String? topic,
   }) async {
     _isLoadingSentence = true;
     _errorMessage = null;
@@ -52,6 +53,7 @@ class TranslationProvider extends ChangeNotifier {
         apiKey: apiKey,
         modelName: modelName,
         translateToEnglish: translateToEnglish,
+        topic: topic,
       );
     } catch (e) {
       _errorMessage = e.toString();

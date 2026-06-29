@@ -393,6 +393,7 @@ class AIService {
     required bool useMock,
     required String apiKey,
     required bool translateToEnglish,
+    String? topic,
     String modelName = 'gemini-3.5-flash',
   }) async {
     if (useMock || apiKey.isEmpty) {
@@ -470,7 +471,7 @@ Use this action when a user wants a new sentence to translate.
   }
 ''';
 
-    final prompt = 'Generate a sentence with action "GENERATE" for CEFR level: $cefrLevel.';
+    final prompt = 'Generate a sentence with action "GENERATE" for CEFR level: $cefrLevel.${(topic != null && topic.trim().isNotEmpty) ? " The sentence MUST be related to the topic: '${topic.trim()}'." : ""}';
 
     try {
       final model = GenerativeModel(
@@ -506,6 +507,7 @@ Use this action when a user wants a new sentence to translate.
     required bool useMock,
     required String apiKey,
     required bool translateToEnglish,
+    String? topic,
     String modelName = 'gemini-3.5-flash',
   }) async {
     if (useMock || apiKey.isEmpty) {
@@ -568,7 +570,7 @@ Expected Output JSON Schema:
 You must respond ONLY with a valid, clean JSON object. Do not wrap the JSON output in markdown formatting (such as ```json), do not include backticks, and do not include any conversational prose outside the JSON structure.
 ''';
 
-    final prompt = 'Generate a cloze exercise with CEFR level: $cefrLevel. Translate to English: $translateToEnglish.';
+    final prompt = 'Generate a cloze exercise with CEFR level: $cefrLevel. Translate to English: $translateToEnglish.${(topic != null && topic.trim().isNotEmpty) ? " The exercise sentence MUST be related to the topic: '${topic.trim()}'." : ""}';
 
     try {
       final model = GenerativeModel(
