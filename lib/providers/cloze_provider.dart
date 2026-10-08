@@ -3,10 +3,12 @@ import '../models/cloze_session.dart';
 import '../models/user_stats.dart';
 import '../services/storage_service.dart';
 import '../services/ai_service.dart';
+import 'mission_provider.dart';
 
 class ClozeProvider extends ChangeNotifier {
   final StorageService _storageService;
   final AIService _aiService;
+  final MissionProvider? missionProvider;
 
   late UserStats _stats;
   bool _isLoadingSentence = false;
@@ -20,8 +22,13 @@ class ClozeProvider extends ChangeNotifier {
   bool _isEvaluated = false;
   int _score = 0;
 
-  ClozeProvider(this._storageService, this._aiService) {
+  ClozeProvider(this._storageService, this._aiService, {this.missionProvider}) {
     _stats = _storageService.getStats();
+  }
+
+  void refreshStats() {
+    _stats = _storageService.getStats();
+    notifyListeners();
   }
 
   // Getters
@@ -108,6 +115,12 @@ class ClozeProvider extends ChangeNotifier {
         );
         await _storageService.saveStats(_stats);
       }
+
+      missionProvider?.recordExerciseCompleted(
+        type: 'cloze',
+        score: _score,
+        cefrLevel: sentence.cefrLevel,
+      );
     } catch (e) {
       _errorMessage = 'Đã xảy ra lỗi khi kiểm tra kết quả: $e';
     } finally {

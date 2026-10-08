@@ -9,6 +9,7 @@ import 'providers/translation_provider.dart';
 import 'providers/vocabulary_provider.dart';
 import 'providers/cloze_provider.dart';
 import 'providers/word_match_provider.dart';
+import 'providers/mission_provider.dart';
 import 'screens/dashboard_screen.dart';
 import 'theme/app_colors.dart';
 
@@ -18,6 +19,7 @@ void main() async {
   // Initialize Storage Service (SharedPreferences)
   final storageService = await StorageService.init();
   final aiService = AIService();
+  final missionProvider = MissionProvider(storageService);
 
   runApp(
     MultiProvider(
@@ -25,17 +27,36 @@ void main() async {
         ChangeNotifierProvider<SettingsProvider>(
           create: (_) => SettingsProvider(storageService),
         ),
+        ChangeNotifierProvider<MissionProvider>.value(
+          value: missionProvider,
+        ),
         ChangeNotifierProvider<TranslationProvider>(
-          create: (_) => TranslationProvider(storageService, aiService),
+          create: (_) => TranslationProvider(
+            storageService,
+            aiService,
+            missionProvider: missionProvider,
+          ),
         ),
         ChangeNotifierProvider<VocabularyProvider>(
-          create: (_) => VocabularyProvider(storageService, aiService),
+          create: (_) => VocabularyProvider(
+            storageService,
+            aiService,
+            missionProvider: missionProvider,
+          ),
         ),
         ChangeNotifierProvider<ClozeProvider>(
-          create: (_) => ClozeProvider(storageService, aiService),
+          create: (_) => ClozeProvider(
+            storageService,
+            aiService,
+            missionProvider: missionProvider,
+          ),
         ),
         ChangeNotifierProvider<WordMatchProvider>(
-          create: (_) => WordMatchProvider(storageService, aiService),
+          create: (_) => WordMatchProvider(
+            storageService,
+            aiService,
+            missionProvider: missionProvider,
+          ),
         ),
       ],
       child: const TranslationPracticeApp(),
@@ -69,6 +90,10 @@ class TranslationPracticeApp extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             side: const BorderSide(color: AppColors.border, width: 1),
           ),
+        ),
+        tabBarTheme: const TabBarThemeData(
+          dividerColor: Colors.transparent,
+          indicatorSize: TabBarIndicatorSize.tab,
         ),
         textTheme: GoogleFonts.outfitTextTheme(
           ThemeData.dark().textTheme,

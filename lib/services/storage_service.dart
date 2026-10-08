@@ -85,6 +85,22 @@ class StorageService {
     await _prefs.setString(_keyVocabulary, encoded);
   }
 
+  static const String _keyDailyMissions = 'daily_missions_state';
+
+  // Daily Missions & Gamification state
+  String? getDailyMissionsJson() {
+    return _prefs.getString(_keyDailyMissions);
+  }
+
+  Future<void> saveDailyMissionsJson(String jsonStr) async {
+    await _prefs.setString(_keyDailyMissions, jsonStr);
+  }
+
+  Future<void> clearDailyMissions() async {
+    await _prefs.remove(_keyDailyMissions);
+  }
+
+  // Clear all saved vocabulary
   Future<void> clearVocabulary() async {
     await _prefs.remove(_keyVocabulary);
   }

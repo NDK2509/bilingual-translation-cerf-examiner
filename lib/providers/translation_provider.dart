@@ -3,10 +3,12 @@ import '../models/user_stats.dart';
 import '../models/translation_session.dart';
 import '../services/storage_service.dart';
 import '../services/ai_service.dart';
+import 'mission_provider.dart';
 
 class TranslationProvider extends ChangeNotifier {
   final StorageService _storageService;
   final AIService _aiService;
+  final MissionProvider? missionProvider;
 
   late UserStats _stats;
   bool _isLoadingSentence = false;
@@ -17,8 +19,13 @@ class TranslationProvider extends ChangeNotifier {
   String? _errorMessage;
   String? _userTranslation;
 
-  TranslationProvider(this._storageService, this._aiService) {
+  TranslationProvider(this._storageService, this._aiService, {this.missionProvider}) {
     _stats = _storageService.getStats();
+  }
+
+  void refreshStats() {
+    _stats = _storageService.getStats();
+    notifyListeners();
   }
 
   // Getters
@@ -94,12 +101,19 @@ class TranslationProvider extends ChangeNotifier {
 
       // Update statistics only if acceptable or has a score above a basic threshold (e.g., 50)
       if (result.score >= 50) {
+        _stats = _storageService.getStats();
         _stats = _stats.recordSession(
           cefrLevel: _currentSentence!.cefrLevel,
           score: result.score,
         );
         await _storageService.saveStats(_stats);
       }
+
+      missionProvider?.recordExerciseCompleted(
+        type: 'translation',
+        score: result.score,
+        cefrLevel: _currentSentence!.cefrLevel,
+      );
     } catch (e) {
       _errorMessage = e.toString();
       _evaluationResult = null;

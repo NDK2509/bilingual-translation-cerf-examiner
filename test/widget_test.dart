@@ -8,6 +8,9 @@ import 'package:practice_translating_english/providers/settings_provider.dart';
 import 'package:practice_translating_english/providers/translation_provider.dart';
 
 import 'package:practice_translating_english/providers/vocabulary_provider.dart';
+import 'package:practice_translating_english/providers/cloze_provider.dart';
+import 'package:practice_translating_english/providers/word_match_provider.dart';
+import 'package:practice_translating_english/providers/mission_provider.dart';
 
 void main() {
   testWidgets('App compiles and runs smoke test', (WidgetTester tester) async {
@@ -15,6 +18,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     final storageService = await StorageService.init();
     final aiService = AIService();
+    final missionProvider = MissionProvider(storageService);
 
     await tester.pumpWidget(
       MultiProvider(
@@ -22,19 +26,46 @@ void main() {
           ChangeNotifierProvider<SettingsProvider>(
             create: (_) => SettingsProvider(storageService),
           ),
+          ChangeNotifierProvider<MissionProvider>.value(
+            value: missionProvider,
+          ),
           ChangeNotifierProvider<TranslationProvider>(
-            create: (_) => TranslationProvider(storageService, aiService),
+            create: (_) => TranslationProvider(
+              storageService,
+              aiService,
+              missionProvider: missionProvider,
+            ),
           ),
           ChangeNotifierProvider<VocabularyProvider>(
-            create: (_) => VocabularyProvider(storageService, aiService),
+            create: (_) => VocabularyProvider(
+              storageService,
+              aiService,
+              missionProvider: missionProvider,
+            ),
+          ),
+          ChangeNotifierProvider<ClozeProvider>(
+            create: (_) => ClozeProvider(
+              storageService,
+              aiService,
+              missionProvider: missionProvider,
+            ),
+          ),
+          ChangeNotifierProvider<WordMatchProvider>(
+            create: (_) => WordMatchProvider(
+              storageService,
+              aiService,
+              missionProvider: missionProvider,
+            ),
           ),
         ],
         child: const TranslationPracticeApp(),
       ),
     );
 
-    // Verify dashboard renders
-    expect(find.text('Translation practice'), findsOneWidget);
-    expect(find.text('Select CEFR Proficiency Level'), findsOneWidget);
+    // Verify dashboard renders key streak and mission components
+    expect(find.text('Streak'), findsOneWidget);
+    expect(find.text('Weekly Streak'), findsOneWidget);
+    expect(find.text('Daily Missions'), findsOneWidget);
+    expect(find.text('Select CEFR Level'), findsOneWidget);
   });
 }

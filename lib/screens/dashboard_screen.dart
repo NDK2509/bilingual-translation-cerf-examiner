@@ -3,16 +3,20 @@ import 'package:provider/provider.dart';
 import '../providers/translation_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/vocabulary_provider.dart';
+import '../providers/cloze_provider.dart';
+import '../providers/word_match_provider.dart';
+import '../providers/mission_provider.dart';
+import '../models/user_stats.dart';
 import '../theme/app_colors.dart';
 import 'practice_screen.dart';
 import 'settings_screen.dart';
 import 'vocabulary_screen.dart';
-
-import '../providers/cloze_provider.dart';
-import '../providers/word_match_provider.dart';
 import 'cloze_practice_screen.dart';
 import 'word_match_practice_screen.dart';
 import 'topic_selection_screen.dart';
+import 'streak_calendar_screen.dart';
+import 'missions_rewards_screen.dart';
+import '../widgets/choose_gift_dialog.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -117,34 +121,107 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           // Language Chip (left side)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: AppColors.primary.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: AppColors.primary.withOpacity(0.2)),
-                            ),
-                            child: Text(
-                              settings.translateToEnglish
-                                  ? 'VIETNAMESE ➔ ENGLISH'
-                                  : 'ENGLISH ➔ VIETNAMESE',
-                              style: const TextStyle(
-                                color: AppColors.primary,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.0,
+                          Flexible(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                              ),
+                              child: Text(
+                                settings.translateToEnglish
+                                    ? 'VI ➔ EN'
+                                    : 'EN ➔ VI',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: AppColors.primary,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.0,
+                                ),
                               ),
                             ),
                           ),
-                          
-                          // Action Icons (settings & translation swapper, no hamburger) (right side)
+                          const SizedBox(width: 8),
+
+                          // Action Icons (Streak, Missions, Settings & translation swapper)
                           Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               IconButton(
+                                visualDensity: VisualDensity.compact,
+                                padding: const EdgeInsets.all(6),
+                                constraints: const BoxConstraints(),
+                                icon: const Icon(
+                                  Icons.local_fire_department_rounded,
+                                  color: AppColors.warning,
+                                  size: 22,
+                                ),
+                                tooltip: 'Streak Calendar',
+                                onPressed: () => Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => const StreakCalendarScreen(),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Consumer<MissionProvider>(
+                                builder: (context, missionProvider, _) {
+                                  final isGiftReady = missionProvider.isGiftReady;
+                                  final unclaimed = missionProvider.unclaimedMissionsCount;
+
+                                  return Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      IconButton(
+                                        visualDensity: VisualDensity.compact,
+                                        padding: const EdgeInsets.all(6),
+                                        constraints: const BoxConstraints(),
+                                        icon: Icon(
+                                          Icons.card_giftcard_rounded,
+                                          color: isGiftReady
+                                              ? const Color(0xFFF59E0B)
+                                              : AppColors.textSecondary,
+                                          size: 22,
+                                        ),
+                                        tooltip: 'Daily Missions & Gifts',
+                                        onPressed: () => Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                            builder: (_) =>
+                                                const MissionsRewardsScreen(),
+                                          ),
+                                        ),
+                                      ),
+                                      if (isGiftReady || unclaimed > 0)
+                                        Positioned(
+                                          right: 2,
+                                          top: 2,
+                                          child: Container(
+                                            width: 8,
+                                            height: 8,
+                                            decoration: BoxDecoration(
+                                              color: isGiftReady
+                                                  ? const Color(0xFFEF4444)
+                                                  : AppColors.primary,
+                                              shape: BoxShape.circle,
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  );
+                                },
+                              ),
+                              const SizedBox(width: 4),
+                              IconButton(
+                                visualDensity: VisualDensity.compact,
+                                padding: const EdgeInsets.all(6),
+                                constraints: const BoxConstraints(),
                                 icon: const Icon(
                                   Icons.swap_horiz_rounded,
                                   color: AppColors.primary,
-                                  size: 24,
+                                  size: 22,
                                 ),
                                 onPressed: () {
                                   settings.updateTranslateToEnglish(!settings.translateToEnglish);
@@ -162,9 +239,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   );
                                 },
                               ),
-                              const SizedBox(width: 8),
+                              const SizedBox(width: 4),
                               IconButton(
-                                icon: const Icon(Icons.settings_outlined, color: AppColors.textSecondary, size: 24),
+                                visualDensity: VisualDensity.compact,
+                                padding: const EdgeInsets.all(6),
+                                constraints: const BoxConstraints(),
+                                icon: const Icon(Icons.settings_outlined, color: AppColors.textSecondary, size: 22),
                                 onPressed: () => Navigator.of(context).push(
                                   MaterialPageRoute(builder: (_) => const SettingsScreen()),
                                 ),
@@ -201,30 +281,68 @@ class _DashboardScreenState extends State<DashboardScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 16),
-          // Custom Stats Grid (Streak, Avg Score, Total, Vocabulary)
+          // Custom Stats Grid (Streak, Avg Score)
           Row(
             children: [
               Expanded(
-                child: Container(
-                  height: 110,
-                  decoration: AppColors.premiumCardDecoration(radius: 20),
-                  padding: const EdgeInsets.all(18),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: const [
-                          Text('Streak', style: TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.bold)),
-                          Icon(Icons.local_fire_department_rounded, color: AppColors.warning, size: 20),
-                        ],
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const StreakCalendarScreen(),
                       ),
-                      Text(
-                        '${stats.streak} Days',
-                        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
-                      ),
-                    ],
+                    );
+                  },
+                  child: Container(
+                    height: 115,
+                    decoration: AppColors.premiumCardDecoration(radius: 20),
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: const [
+                            Text(
+                              'Streak',
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Icon(
+                              Icons.local_fire_department_rounded,
+                              color: AppColors.warning,
+                              size: 20,
+                            ),
+                          ],
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${stats.activeStreak} Days',
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            const Text(
+                              'View Calendar ➔',
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.warning,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -255,6 +373,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ],
           ),
+          const SizedBox(height: 16),
+
+          // Weekly Streak Strip
+          _buildWeeklyStreakStrip(context, stats),
+          const SizedBox(height: 16),
+
+          // Daily Missions & EXP Card
+          _buildDailyMissionsCard(context),
           const SizedBox(height: 16),
 
           // Exercises Breakdown Card
@@ -475,9 +601,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
               children: const [
                 Icon(Icons.info_outline_rounded, size: 12, color: AppColors.warning),
                 SizedBox(width: 6),
-                Text(
-                  'Mock mode is active. Topic filtering will not apply.',
-                  style: TextStyle(fontSize: 10, color: AppColors.warning),
+                Expanded(
+                  child: Text(
+                    'Mock mode is active. Topic filtering will not apply.',
+                    style: TextStyle(fontSize: 10, color: AppColors.warning),
+                  ),
                 ),
               ],
             ),
@@ -652,6 +780,494 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  // --- WEEKLY STREAK STRIP ---
+  Widget _buildWeeklyStreakStrip(BuildContext context, UserStats stats) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    // Find Monday of this week (Dart weekday: Monday=1, Sunday=7)
+    final monday = today.subtract(Duration(days: today.weekday - 1));
+    final weekDays = List.generate(7, (i) => monday.add(Duration(days: i)));
+    const dayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+    return Container(
+      decoration: AppColors.premiumCardDecoration(radius: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: const [
+                  Icon(
+                    Icons.local_fire_department_rounded,
+                    color: AppColors.warning,
+                    size: 18,
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    'Weekly Streak',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+              InkWell(
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const StreakCalendarScreen()),
+                ),
+                child: Row(
+                  children: const [
+                    Text(
+                      'Calendar',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    SizedBox(width: 4),
+                    Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      color: AppColors.primary,
+                      size: 11,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: List.generate(7, (index) {
+              final day = weekDays[index];
+              final isToday = day.year == today.year &&
+                  day.month == today.month &&
+                  day.day == today.day;
+              final isPracticed = stats.hasPracticedOn(day);
+              final isFuture = day.isAfter(today);
+
+              return Column(
+                children: [
+                  Text(
+                    dayLabels[index],
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: isToday ? AppColors.primary : AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: isPracticed
+                          ? const LinearGradient(
+                              colors: [Color(0xFFF59E0B), Color(0xFFEF4444)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            )
+                          : null,
+                      color: isPracticed
+                          ? null
+                          : (isToday ? AppColors.surfaceElevated : Colors.transparent),
+                      border: Border.all(
+                        color: isToday
+                            ? AppColors.primary
+                            : (isPracticed ? Colors.transparent : AppColors.border),
+                        width: isToday ? 2.0 : 1.0,
+                      ),
+                      boxShadow: isPracticed
+                          ? [
+                              BoxShadow(
+                                color: const Color(0xFFF59E0B).withValues(alpha: 0.4),
+                                blurRadius: 8,
+                              ),
+                            ]
+                          : null,
+                    ),
+                    child: Center(
+                      child: isPracticed
+                          ? const Icon(
+                              Icons.local_fire_department_rounded,
+                              color: Colors.white,
+                              size: 18,
+                            )
+                          : (isToday
+                              ? Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.primary,
+                                    shape: BoxShape.circle,
+                                  ),
+                                )
+                              : Text(
+                                  '${day.day}',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: isFuture
+                                        ? AppColors.textMuted
+                                        : AppColors.textSecondary,
+                                  ),
+                                )),
+                    ),
+                  ),
+                ],
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- DAILY MISSIONS & EXP CARD ---
+  Widget _buildDailyMissionsCard(BuildContext context) {
+    return Consumer<MissionProvider>(
+      builder: (context, missionProvider, _) {
+        final missions = missionProvider.dailyMissions;
+        final currentExp = missionProvider.currentExp;
+        final isGiftReady = missionProvider.isGiftReady;
+        final progress = (currentExp / 100.0).clamp(0.0, 1.0);
+
+        return Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: isGiftReady
+                  ? [
+                      const Color(0xFFB45309).withValues(alpha: 0.3),
+                      AppColors.surfaceElevated.withValues(alpha: 0.9),
+                    ]
+                  : [
+                      AppColors.surfaceElevated.withValues(alpha: 0.8),
+                      AppColors.surface.withValues(alpha: 0.85),
+                    ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isGiftReady
+                  ? const Color(0xFFF59E0B)
+                  : AppColors.borderLight.withValues(alpha: 0.4),
+              width: isGiftReady ? 1.8 : 1.0,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: (isGiftReady ? const Color(0xFFF59E0B) : Colors.black)
+                    .withValues(alpha: isGiftReady ? 0.25 : 0.35),
+                blurRadius: 24,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header Row
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.military_tech_rounded,
+                            color: Color(0xFFF59E0B),
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: const [
+                              Text(
+                                'Daily Missions',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textPrimary,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              Text(
+                                '3 missions / day to earn 100 EXP',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      gradient: isGiftReady
+                          ? const LinearGradient(
+                              colors: [Color(0xFFF59E0B), Color(0xFFEF4444)],
+                            )
+                          : null,
+                      color: isGiftReady
+                          ? null
+                          : AppColors.primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isGiftReady
+                            ? const Color(0xFFF59E0B)
+                            : AppColors.primary.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Text(
+                      '$currentExp / 100 EXP',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: isGiftReady ? Colors.white : AppColors.primary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 12),
+
+              // EXP Progress Bar
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  minHeight: 8,
+                  backgroundColor: AppColors.surface,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    isGiftReady ? const Color(0xFFF59E0B) : AppColors.primary,
+                  ),
+                ),
+              ),
+
+              // Gift Ready Banner
+              if (isGiftReady) ...[
+                const SizedBox(height: 14),
+                GestureDetector(
+                  onTap: () => ChooseGiftDialog.show(context),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFF59E0B), Color(0xFFEF4444)],
+                      ),
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFF59E0B).withValues(alpha: 0.4),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: const [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.card_giftcard_rounded,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                            SizedBox(width: 10),
+                            Text(
+                              '100 EXP Full! Choose Your Gift',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          color: Colors.white,
+                          size: 14,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+
+              const SizedBox(height: 14),
+
+              // Missions list (compact)
+              ...missions.map((m) {
+                final isDone = m.isCompleted;
+                final isClaimed = m.isClaimed;
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          isClaimed
+                              ? Icons.check_circle_rounded
+                              : (isDone
+                                  ? Icons.stars_rounded
+                                  : Icons.radio_button_unchecked_rounded),
+                          color: isClaimed
+                              ? AppColors.success
+                              : (isDone
+                                  ? const Color(0xFFF59E0B)
+                                  : AppColors.textMuted),
+                          size: 18,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            m.title,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: isClaimed
+                                  ? AppColors.textSecondary
+                                  : Colors.white,
+                              decoration: isClaimed ? TextDecoration.lineThrough : null,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          '${m.current}/${m.target}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isDone ? const Color(0xFFF59E0B) : AppColors.textMuted,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        if (isDone && !isClaimed)
+                          InkWell(
+                            onTap: () {
+                              final claimed = missionProvider.claimMissionExp(m.id);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('🎉 Claimed +$claimed EXP!'),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF59E0B),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Text(
+                                'CLAIM',
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ),
+                          )
+                        else
+                          Text(
+                            '+${m.expReward} EXP',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: isClaimed
+                                  ? AppColors.textMuted
+                                  : const Color(0xFFF59E0B),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+
+              const SizedBox(height: 6),
+
+              // Bottom View Hub Link
+              Align(
+                alignment: Alignment.centerRight,
+                child: InkWell(
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const MissionsRewardsScreen(),
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Text(
+                          'View All Missions & Gifts Log',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                        SizedBox(width: 4),
+                        Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          color: AppColors.primary,
+                          size: 10,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

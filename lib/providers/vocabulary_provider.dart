@@ -2,15 +2,17 @@ import 'package:flutter/material.dart';
 import '../models/saved_word.dart';
 import '../services/storage_service.dart';
 import '../services/ai_service.dart';
+import 'mission_provider.dart';
 
 class VocabularyProvider extends ChangeNotifier {
   final StorageService _storageService;
   final AIService _aiService;
+  final MissionProvider? missionProvider;
 
   List<SavedWord> _vocabulary = [];
   bool _isLoadingDetails = false;
 
-  VocabularyProvider(this._storageService, this._aiService) {
+  VocabularyProvider(this._storageService, this._aiService, {this.missionProvider}) {
     _loadVocabulary();
   }
 
@@ -80,6 +82,7 @@ class VocabularyProvider extends ChangeNotifier {
 
     _vocabulary.insert(0, word);
     await _storageService.saveVocabulary(_vocabulary);
+    missionProvider?.recordVocabularySaved();
     notifyListeners();
   }
 

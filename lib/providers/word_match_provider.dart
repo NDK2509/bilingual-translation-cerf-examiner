@@ -3,10 +3,12 @@ import '../models/word_match_session.dart';
 import '../models/user_stats.dart';
 import '../services/storage_service.dart';
 import '../services/ai_service.dart';
+import 'mission_provider.dart';
 
 class WordMatchProvider extends ChangeNotifier {
   final StorageService _storageService;
   final AIService _aiService;
+  final MissionProvider? missionProvider;
 
   late UserStats _stats;
   bool _isLoadingExercise = false;
@@ -18,8 +20,13 @@ class WordMatchProvider extends ChangeNotifier {
   bool _isEvaluated = false;
   bool _isCorrect = false;
 
-  WordMatchProvider(this._storageService, this._aiService) {
+  WordMatchProvider(this._storageService, this._aiService, {this.missionProvider}) {
     _stats = _storageService.getStats();
+  }
+
+  void refreshStats() {
+    _stats = _storageService.getStats();
+    notifyListeners();
   }
 
   // Getters
@@ -94,6 +101,12 @@ class WordMatchProvider extends ChangeNotifier {
       );
       await _storageService.saveStats(_stats);
     }
+
+    missionProvider?.recordExerciseCompleted(
+      type: 'wordmatch',
+      score: score,
+      cefrLevel: exercise.cefrLevel,
+    );
 
     notifyListeners();
   }
